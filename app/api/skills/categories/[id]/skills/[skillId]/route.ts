@@ -3,15 +3,15 @@ import { prisma } from '@/lib/prisma'
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ categoryId: string; id: string }> }
+  { params }: { params: Promise<{ id: string; skillId: string }> }
 ) {
   try {
-    const { id } = await params
+    const { skillId } = await params
     const body = await request.json()
     const { name, level, order } = body
 
     const skill = await prisma.skill.update({
-      where: { id },
+      where: { id: skillId },
       data: {
         ...(name !== undefined && { name }),
         ...(level !== undefined && { level }),
@@ -31,12 +31,12 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ categoryId: string; id: string }> }
+  { params }: { params: Promise<{ id: string; skillId: string }> }
 ) {
   try {
-    const { id } = await params
+    const { skillId } = await params
     await prisma.skill.delete({
-      where: { id },
+      where: { id: skillId },
     })
 
     return NextResponse.json({ message: 'Skill deleted successfully' })

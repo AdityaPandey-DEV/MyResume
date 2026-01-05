@@ -8,11 +8,10 @@ export default function FeaturedProjects() {
   const { data: featuredProjects, isLoading, error } = useFeaturedProjects()
 
   useEffect(() => {
-    console.log('FeaturedProjects component mounted')
-    console.log('Featured projects data:', featuredProjects)
-    console.log('Is loading:', isLoading)
-    console.log('Error:', error)
-  }, [featuredProjects, isLoading, error])
+    if (error) {
+      console.error('FeaturedProjects error:', error)
+    }
+  }, [error])
 
   if (isLoading) {
     return (

@@ -30,8 +30,13 @@ export function useFeaturedProjects() {
   return useQuery<FeaturedProject[]>({
     queryKey: ['featured-projects'],
     queryFn: async () => {
-      const res = await axios.get('/featured-projects')
-      return res.data
+      try {
+        const res = await axios.get('/featured-projects')
+        return res.data || []
+      } catch (error) {
+        console.error('Error fetching featured projects:', error)
+        throw error
+      }
     },
   })
 }
