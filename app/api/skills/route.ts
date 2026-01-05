@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { revalidatePath } from 'next/cache'
 
 export async function GET() {
   try {
@@ -116,6 +117,8 @@ export async function PUT(request: NextRequest) {
     const updatedSoftSkills = await prisma.softSkill.findMany({
       orderBy: { order: 'asc' },
     })
+    revalidatePath('/')
+    revalidatePath('/skills')
 
     return NextResponse.json({
       categories: updatedCategories,

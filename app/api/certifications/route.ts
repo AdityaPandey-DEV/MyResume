@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { revalidatePath } from 'next/cache'
 
 export async function GET() {
   try {
@@ -44,6 +45,8 @@ export async function POST(request: NextRequest) {
         order: order ?? 0,
       },
     })
+      revalidatePath('/')
+      revalidatePath('/certifications')
 
     return NextResponse.json(certification, { status: 201 })
   } catch (error) {

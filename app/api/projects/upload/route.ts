@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
 import { existsSync } from 'fs'
+import { revalidatePath } from 'next/cache'
 
 export async function POST(request: NextRequest) {
   try {
@@ -55,7 +56,8 @@ export async function POST(request: NextRequest) {
 
     // Return the image URL path
     const imageUrl = `/images/projects/${fileName}`
-
+     revalidatePath('/')
+  revalidatePath('/projects')
     return NextResponse.json({ imageUrl }, { status: 200 })
   } catch (error) {
     console.error('Error uploading file:', error)
