@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
 import type { NextRequest } from 'next/server'
 
-const authOptions = {
+const handler = NextAuth({
   providers: [
     CredentialsProvider({
       name: 'Credentials',
@@ -45,7 +45,7 @@ const authOptions = {
   ],
 
   session: {
-    strategy: 'jwt' as 'jwt', // 🔥 THIS FIXES THE ERROR
+    strategy: 'jwt',
   },
 
   pages: {
@@ -68,9 +68,7 @@ const authOptions = {
 
   secret: process.env.AUTH_SECRET,
   debug: process.env.NODE_ENV === 'development',
-}
-
-const handler = NextAuth(authOptions)
+})
 
 export async function GET(req: NextRequest) {
   return handler.handlers.GET(req)
