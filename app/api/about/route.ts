@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { revalidatePath } from 'next/cache'
 
 export async function GET() {
   try {
@@ -150,6 +151,8 @@ export async function PUT(request: NextRequest) {
         },
       },
     })
+      revalidatePath('/')        // homepage
+      revalidatePath('/about')   // if you have /about page
 
     return NextResponse.json(updatedAbout)
   } catch (error) {

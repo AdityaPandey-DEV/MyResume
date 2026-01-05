@@ -1,31 +1,19 @@
 'use client'
 
-import { useCertifications } from '@/hooks/useCertifications'
-import Certificate from './Cirtificate/Cirtificate'
+import Certificate from './Cirtificate'
 
-export default function Certifications() {
-  const { data: certifications, isLoading } = useCertifications()
+type Props = {
+  certifications: any[]
+}
 
-  if (isLoading) {
-    return (
-      <section id="certifications" className="py-20 bg-white">
-        <div className="container mx-auto px-6">
-          <div className="text-center">Loading...</div>
-        </div>
-      </section>
-    )
-  }
-
-  if (!certifications || certifications.length === 0) {
-    return null
-  }
-
+export default function CertificationsClient({ certifications }: Props) {
   return (
     <section id="certifications" className="py-20 bg-white">
       <div className="container mx-auto px-6">
         <h2 className="text-3xl md:text-4xl font-bold mb-4 text-center gradient-text">
           Certifications
         </h2>
+
         <p className="text-gray-600 text-center mb-12 max-w-3xl mx-auto">
           Professional certifications that validate my skills and commitment to
           continuous learning
@@ -62,4 +50,3 @@ export default function Certifications() {
     </section>
   )
 }
-

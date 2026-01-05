@@ -1,5 +1,5 @@
 import Header from '@/components/Header'
-import Skills from '@/components/Skills'
+import Skills from '@/components/Skills/index'
 import Footer from '@/components/Footer'
 
 export default function SkillsPage() {

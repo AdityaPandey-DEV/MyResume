@@ -1,5 +1,5 @@
 import Header from '@/components/Header'
-import Education from '@/components/Education'
+import Education from '@/components/Education/index'
 import Footer from '@/components/Footer'
 
 export default function EducationPage() {

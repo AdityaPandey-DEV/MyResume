@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import { useFeaturedProjects } from '@/hooks/useFeaturedProjects'
-import FeaturedProjectSpotlight from './Project/FeaturedProjectSpotlight'
+import FeaturedProjectSpotlight from './FeaturedProjects/FeaturedProjectSpotlight'
 
 export default function FeaturedProjects() {
   const { data: featuredProjects, isLoading, error } = useFeaturedProjects()

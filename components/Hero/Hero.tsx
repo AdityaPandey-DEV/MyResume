@@ -2,24 +2,21 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { useHero } from '@/hooks/useHero'
 
-export default function Hero() {
-  const { data: hero, isLoading } = useHero()
-
-  if (isLoading) {
-    return (
-      <div className="gradient-bg text-white py-20 md:py-28">
-        <div className="container mx-auto px-6">
-          <div className="text-center">Loading...</div>
-        </div>
-      </div>
-    )
+type HeroProps = {
+  hero: {
+    name: string
+    title: string
+    description: string
+    imageUrl: string
+    linkedinUrl?: string | null
+    githubUrl?: string | null
+    email?: string | null
+    leetcodeUrl?: string | null
   }
+}
 
-  if (!hero) {
-    return null
-  }
+export default function HeroClient({ hero }: HeroProps) {
 
   return (
     <div className="gradient-bg text-white py-20 md:py-28">

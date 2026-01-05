@@ -1,12 +1,12 @@
 import Header from '@/components/Header'
-import Certifications from '@/components/Certifications'
+import Certifications from '@/components/Certifications/index'
 import Footer from '@/components/Footer'
 
 export default function CertificationsPage() {
   return (
     <div className="App">
       <Header />
-      <Certifications />
+      <Certifications/>
       <Footer />
     </div>
   )
