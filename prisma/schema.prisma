@@ -1,0 +1,258 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model for authentication
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  name          String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  accounts      Account[]
+  sessions      Session[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?  @db.Text
+  access_token      String?  @db.Text
+  expires_at         Int?
+  token_type        String?
+  scope             String?
+  id_token          String?  @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// Hero Section
+model Hero {
+  id          String   @id @default(cuid())
+  name        String
+  title       String
+  description String   @db.Text
+  imageUrl    String
+  linkedinUrl String?
+  githubUrl   String?
+  email       String?
+  leetcodeUrl String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// About Section
+model About {
+  id        String   @id @default(cuid())
+  heading   String
+  subHeading String  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  journey   Journey?
+  values    PersonalValue[]
+  focusAreas FocusArea[]
+}
+
+model Journey {
+  id        String   @id @default(cuid())
+  aboutId  String   @unique
+  title     String
+  about     About    @relation(fields: [aboutId], references: [id], onDelete: Cascade)
+  paragraphs JourneyParagraph[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model JourneyParagraph {
+  id        String   @id @default(cuid())
+  journeyId String
+  content   String   @db.Text
+  order     Int
+  journey   Journey  @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([journeyId, order])
+}
+
+model PersonalValue {
+  id        String   @id @default(cuid())
+  aboutId   String
+  value     String
+  order     Int
+  about     About    @relation(fields: [aboutId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([aboutId, order])
+}
+
+model FocusArea {
+  id          String   @id @default(cuid())
+  aboutId    String
+  title       String
+  description String   @db.Text
+  icon        String?
+  order       Int
+  about       About    @relation(fields: [aboutId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([aboutId, order])
+}
+
+// Projects
+model Project {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @db.Text
+  technologies String[]
+  icon        String?
+  gradient    String?
+  githubUrl   String?
+  liveDemoUrl String?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  featuredProject FeaturedProject?
+}
+
+model FeaturedProject {
+  id          String   @id @default(cuid())
+  projectId   String   @unique
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  technologies String[]
+  keyFeatures KeyFeature[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model KeyFeature {
+  id                String          @id @default(cuid())
+  featuredProjectId String
+  feature           String
+  order             Int
+  featuredProject   FeaturedProject @relation(fields: [featuredProjectId], references: [id], onDelete: Cascade)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([featuredProjectId, order])
+}
+
+// Skills
+model SkillCategory {
+  id        String   @id @default(cuid())
+  title     String
+  icon      String?
+  order     Int      @default(0)
+  skills    Skill[]
+  tags      String[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Skill {
+  id             String        @id @default(cuid())
+  categoryId     String
+  category       SkillCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  name           String
+  level          Int           @default(0) // 0-100
+  order          Int           @default(0)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([categoryId, order])
+}
+
+model AdvancedSkill {
+  id        String   @id @default(cuid())
+  category  String   // 'ai' or 'cloud'
+  skill     String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category, order])
+}
+
+model SoftSkill {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @db.Text
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([order])
+}
+
+// Education
+model Education {
+  id          String   @id @default(cuid())
+  level       String
+  duration    String
+  degree      String
+  institution String
+  description String   @db.Text
+  icon        String?
+  bgColor     String?
+  lightText   String?
+  pillBg      String?
+  pillText    String?
+  skills      String[]
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([order])
+}
+
+// Certifications
+model Certification {
+  id             String   @id @default(cuid())
+  title          String
+  description    String   @db.Text
+  organization   String
+  date           String
+  tags           String[]
+  certificateUrl String?
+  icon           String?
+  color          String?
+  order          Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([order])
+}
+
