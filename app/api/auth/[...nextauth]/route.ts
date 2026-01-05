@@ -6,7 +6,7 @@ import bcrypt from 'bcryptjs'
 
 import type { NextRequest } from 'next/server'
 
-const authOptions = {
+const authOptions: any = {
   adapter: PrismaAdapter(prisma) as any,
   providers: [
     CredentialsProvider({
@@ -50,6 +50,7 @@ const authOptions = {
   ],
   session: {
     strategy: 'jwt' as const,
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   pages: {
     signIn: '/admin/login',
@@ -68,7 +69,9 @@ const authOptions = {
       return session
     },
   },
-  secret: process.env.AUTH_SECRET,
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+  debug: process.env.NODE_ENV === 'development',
+  trustHost: true, // Required for Vercel
 }
 
 const handler = NextAuth(authOptions)

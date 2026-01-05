@@ -22,17 +22,24 @@ export default function LoginPage() {
         email,
         password,
         redirect: false,
+        callbackUrl: '/admin',
       })
 
       if (result?.error) {
         setError(result.error)
-      } else {
+        setLoading(false)
+      } else if (result?.ok) {
+        // Wait a bit for session to be set
+        await new Promise((resolve) => setTimeout(resolve, 100))
         router.push('/admin')
         router.refresh()
+      } else {
+        setError('Login failed. Please try again.')
+        setLoading(false)
       }
     } catch (err) {
+      console.error('Login error:', err)
       setError('An error occurred. Please try again.')
-    } finally {
       setLoading(false)
     }
   }

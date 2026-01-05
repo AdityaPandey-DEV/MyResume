@@ -136,8 +136,15 @@ The database includes models for:
 Make sure to set all environment variables in your deployment platform:
 
 - `DATABASE_URL` - PostgreSQL connection string
-- `AUTH_SECRET` - NextAuth secret
-- `AUTH_URL` - Your application URL
+- `AUTH_SECRET` - NextAuth secret (required for production)
+- `NEXTAUTH_SECRET` - Alternative name for AUTH_SECRET (NextAuth v5 also accepts this)
+- `NEXTAUTH_URL` - Your production URL (e.g., https://your-app.vercel.app) - Optional but recommended
+- `ADMIN_EMAIL` - Admin email for seed script
+- `ADMIN_PASSWORD` - Admin password for seed script
+
+**Important for Vercel:**
+- Make sure `AUTH_SECRET` is set in Vercel environment variables
+- The `trustHost: true` option is set in NextAuth config for Vercel compatibility
 - `ADMIN_EMAIL` - Admin email
 - `ADMIN_PASSWORD` - Admin password (hashed in database)
 
