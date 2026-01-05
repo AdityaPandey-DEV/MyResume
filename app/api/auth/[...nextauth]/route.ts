@@ -1,11 +1,13 @@
 import NextAuth from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
-import bcrypt from 'bcryptjs'
+import { PrismaAdapter } from '@auth/prisma-adapter'
 import { prisma } from '@/lib/prisma'
+import bcrypt from 'bcryptjs'
 
-export const runtime = 'nodejs' // 🔥 IMPORTANT on Vercel
+import type { NextRequest } from 'next/server'
 
-const handler = NextAuth({
+const authOptions: any = {
+  adapter: PrismaAdapter(prisma) as any,
   providers: [
     CredentialsProvider({
       name: 'Credentials',
@@ -14,67 +16,71 @@ const handler = NextAuth({
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        const email = credentials?.email as string | undefined
-        const password = credentials?.password as string | undefined
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error('Please enter your email and password')
+        }
 
-        if (!email || !password) return null
+        const email = credentials.email as string
+        const password = credentials.password as string
 
         const user = await prisma.user.findUnique({
           where: { email },
         })
 
-        if (!user || !user.password) return null
+        if (!user || !user.password) {
+          throw new Error('Invalid email or password')
+        }
 
-        const isValid = await bcrypt.compare(password, user.password)
-        if (!isValid) return null
+        const isPasswordValid = await bcrypt.compare(
+          password,
+          user.password
+        )
+
+        if (!isPasswordValid) {
+          throw new Error('Invalid email or password')
+        }
 
         return {
           id: user.id,
           email: user.email,
-          name: user.name ?? undefined,
+          name: user.name,
         }
       },
     }),
   ],
-
   session: {
-    strategy: 'jwt',
+    strategy: 'jwt' as const,
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
-
   pages: {
     signIn: '/admin/login',
   },
-
-  cookies: {
-    sessionToken: {
-      // 🔐 REQUIRED for Vercel
-      name:
-        process.env.NODE_ENV === 'production'
-          ? '__Secure-next-auth.session-token'
-          : 'next-auth.session-token',
-      options: {
-        httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        secure: process.env.NODE_ENV === 'production', // 🔥 MUST be true on Vercel
-      },
-    },
-  },
-
   callbacks: {
-    async jwt({ token, user }) {
-      if (user) token.id = user.id
+    async jwt({ token, user }: any) {
+      if (user) {
+        token.id = user.id
+      }
       return token
     },
-    async session({ session, token }) {
+    async session({ session, token }: any) {
       if (session.user) {
         session.user.id = token.id as string
       }
       return session
     },
   },
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+  debug: process.env.NODE_ENV === 'development',
+  trustHost: true, // Required for Vercel
+}
 
-  secret: process.env.AUTH_SECRET,
-})
+const handler = NextAuth(authOptions)
 
-export { handler as GET, handler as POST }
+export async function GET(req: NextRequest) {
+  return handler.handlers.GET(req)
+}
+
+export async function POST(req: NextRequest) {
+  return handler.handlers.POST(req)
+}
+
