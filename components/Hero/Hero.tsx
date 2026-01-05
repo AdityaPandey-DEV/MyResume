@@ -23,7 +23,7 @@ export default function HeroClient({ hero }: HeroProps) {
       <div className="container mx-auto px-6">
         <div className="flex flex-col md:flex-row items-center">
           <div className="md:w-1/2 animate-fade-in">
-            <h1 className="text-4xl md:text-5xl flex font-bold mb-4">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">
               Hi, I&apos;m <span className="text-yellow-300">{hero.name}</span>
             </h1>
             <h2 className="text-2xl md:text-3xl font-medium mb-6">
