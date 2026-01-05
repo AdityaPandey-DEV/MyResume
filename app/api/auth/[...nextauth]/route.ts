@@ -1,13 +1,10 @@
 import NextAuth from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
-import { PrismaAdapter } from '@auth/prisma-adapter'
-import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
-
+import { prisma } from '@/lib/prisma'
 import type { NextRequest } from 'next/server'
 
-const authOptions: any = {
-  adapter: PrismaAdapter(prisma) as any,
+const authOptions = {
   providers: [
     CredentialsProvider({
       name: 'Credentials',
@@ -15,13 +12,14 @@ const authOptions: any = {
         email: { label: 'Email', type: 'email' },
         password: { label: 'Password', type: 'password' },
       },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error('Please enter your email and password')
-        }
 
-        const email = credentials.email as string
-        const password = credentials.password as string
+      async authorize(credentials) {
+        const email = credentials?.email as string | undefined
+        const password = credentials?.password as string | undefined
+
+        if (!email || !password) {
+          throw new Error('Invalid credentials')
+        }
 
         const user = await prisma.user.findUnique({
           where: { email },
@@ -31,47 +29,45 @@ const authOptions: any = {
           throw new Error('Invalid email or password')
         }
 
-        const isPasswordValid = await bcrypt.compare(
-          password,
-          user.password
-        )
+        const isValid = await bcrypt.compare(password, user.password)
 
-        if (!isPasswordValid) {
+        if (!isValid) {
           throw new Error('Invalid email or password')
         }
 
         return {
           id: user.id,
           email: user.email,
-          name: user.name,
+          name: user.name ?? undefined,
         }
       },
     }),
   ],
+
   session: {
-    strategy: 'jwt' as const,
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    strategy: 'jwt' as 'jwt', // 🔥 THIS FIXES THE ERROR
   },
+
   pages: {
     signIn: '/admin/login',
   },
+
   callbacks: {
     async jwt({ token, user }: any) {
-      if (user) {
-        token.id = user.id
-      }
+      if (user) token.id = user.id
       return token
     },
+
     async session({ session, token }: any) {
-      if (session.user) {
-        session.user.id = token.id as string
+      if (session.user && token.id) {
+        session.user.id = token.id
       }
       return session
     },
   },
-  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+
+  secret: process.env.AUTH_SECRET,
   debug: process.env.NODE_ENV === 'development',
-  trustHost: true, // Required for Vercel
 }
 
 const handler = NextAuth(authOptions)
@@ -83,4 +79,3 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   return handler.handlers.POST(req)
 }
-
