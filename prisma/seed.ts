@@ -1,10 +1,36 @@
 import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
+import 'dotenv/config'
 
 const prisma = new PrismaClient()
 
 async function main() {
   console.log('Starting seed...')
+
+  // Clear existing data in reverse dependency order
+  console.log('Clearing existing data...')
+  
+  // Delete in reverse dependency order to handle foreign keys
+  await prisma.keyFeature.deleteMany()
+  await prisma.featuredProject.deleteMany()
+  await prisma.project.deleteMany()
+  await prisma.certification.deleteMany()
+  await prisma.education.deleteMany()
+  await prisma.softSkill.deleteMany()
+  await prisma.advancedSkill.deleteMany()
+  await prisma.skill.deleteMany()
+  await prisma.skillCategory.deleteMany()
+  await prisma.focusArea.deleteMany()
+  await prisma.personalValue.deleteMany()
+  await prisma.journeyParagraph.deleteMany()
+  await prisma.journey.deleteMany()
+  await prisma.about.deleteMany()
+  await prisma.hero.deleteMany()
+  await prisma.session.deleteMany()
+  await prisma.account.deleteMany()
+  // Keep admin user, just update it
+  
+  console.log('Existing data cleared')
 
   // Create admin user
   const hashedPassword = await bcrypt.hash(
@@ -219,13 +245,64 @@ async function main() {
     },
   ]
 
+  const createdProjects = []
   for (const projectData of projects) {
-    await prisma.project.create({
+    const project = await prisma.project.create({
       data: projectData,
     })
+    createdProjects.push(project)
   }
 
   console.log('Projects created')
+
+  // Create Featured Project for AtmosphereApp
+  const atmosphereApp = createdProjects.find((p) => p.title === 'AtmosphereApp')
+  if (atmosphereApp) {
+    await prisma.featuredProject.create({
+      data: {
+        projectId: atmosphereApp.id,
+        imageUrl:
+          'https://raw.githubusercontent.com/adityapandey-dev/adityapandey-dev/main/assets/images/AtmosphereApp.png',
+        technologies: [
+          'HTML5',
+          'CSS3',
+          'JavaScript',
+          'OpenWeather API',
+          'Geolocation API',
+          'Local Storage',
+        ],
+        keyFeatures: {
+          create: [
+            {
+              feature: 'Real-time weather updates using OpenWeather API',
+              order: 0,
+            },
+            {
+              feature: 'Location-based weather tracking',
+              order: 1,
+            },
+            {
+              feature: '5-day forecast with detailed hourly predictions',
+              order: 2,
+            },
+            {
+              feature: 'Responsive design that works on mobile and desktop',
+              order: 3,
+            },
+            {
+              feature: 'Dynamic UI that changes based on weather conditions',
+              order: 4,
+            },
+            {
+              feature: 'Search history and favorite locations',
+              order: 5,
+            },
+          ],
+        },
+      },
+    })
+    console.log('Featured project created for AtmosphereApp')
+  }
 
   // Create Skills
   const skillCategories = [

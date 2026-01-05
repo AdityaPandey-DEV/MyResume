@@ -1,6 +1,7 @@
 import Header from '@/components/Header'
 import Hero from '@/components/Hero'
 import About from '@/components/AboutMe/About'
+import FeaturedProjects from '@/components/FeaturedProjects'
 import Projects from '@/components/Projects'
 import Skills from '@/components/Skills'
 import Certifications from '@/components/Certifications'
@@ -14,6 +15,7 @@ export default function Home() {
       <Header />
       <Hero />
       <About />
+      <FeaturedProjects />
       <Projects />
       <Skills />
       <Certifications />

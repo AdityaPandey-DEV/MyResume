@@ -1,6 +1,7 @@
 'use client'
 
 import { useProjects } from '@/hooks/useProjects'
+import { useFeaturedProjects } from '@/hooks/useFeaturedProjects'
 import ProjectsCard from './Project/ProjectsCard'
 
 function chunkArray<T>(array: T[], size: number): T[][] {
@@ -12,7 +13,11 @@ function chunkArray<T>(array: T[], size: number): T[][] {
 }
 
 export default function Projects() {
-  const { data: projects, isLoading } = useProjects()
+  const { data: projects, isLoading: projectsLoading } = useProjects()
+  const { data: featuredProjects, isLoading: featuredLoading } =
+    useFeaturedProjects()
+
+  const isLoading = projectsLoading || featuredLoading
 
   if (isLoading) {
     return (
@@ -28,13 +33,27 @@ export default function Projects() {
     return null
   }
 
-  const projectsInRows = chunkArray(projects, 3)
+  // Get featured project IDs
+  const featuredProjectIds = new Set(
+    featuredProjects?.map((fp) => fp.projectId) || []
+  )
+
+  // Filter out featured projects from regular projects
+  const regularProjects = projects.filter(
+    (project: any) => !featuredProjectIds.has(project.id)
+  )
+
+  if (regularProjects.length === 0) {
+    return null
+  }
+
+  const projectsInRows = chunkArray(regularProjects, 3)
 
   return (
     <section id="projects" className="py-20 bg-white">
       <div className="container mx-auto px-6">
         <h2 className="text-3xl md:text-4xl font-bold mb-4 text-center gradient-text">
-          Featured Projects
+          Projects
         </h2>
         <p className="text-gray-600 text-center mb-12 max-w-3xl mx-auto">
           Explore a selection of my work showcasing practical applications of my
@@ -47,18 +66,19 @@ export default function Projects() {
               key={rowIndex}
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
             >
-              {row.map((project: any) => (
-                <ProjectsCard
-                  key={project.id}
-                  name={project.title}
-                  description={project.description}
-                  technologies={project.technologies}
-                  icon={project.icon}
-                  gradient={project.gradient}
-                  githubLink={project.githubUrl}
-                  liveDemoLink={project.liveDemoUrl}
-                />
-              ))}
+                {row.map((project: any) => (
+                  <ProjectsCard
+                    key={project.id}
+                    name={project.title}
+                    description={project.description}
+                    technologies={project.technologies}
+                    icon={project.icon}
+                    gradient={project.gradient}
+                    imageUrl={project.imageUrl}
+                    githubLink={project.githubUrl}
+                    liveDemoLink={project.liveDemoUrl}
+                  />
+                ))}
             </div>
           ))}
         </div>

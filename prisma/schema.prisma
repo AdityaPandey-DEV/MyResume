@@ -140,6 +140,7 @@ model Project {
   technologies String[]
   icon        String?
   gradient    String?
+  imageUrl    String?
   githubUrl   String?
   liveDemoUrl String?
   order       Int      @default(0)
@@ -152,6 +153,7 @@ model FeaturedProject {
   id          String   @id @default(cuid())
   projectId   String   @unique
   project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  imageUrl    String?
   technologies String[]
   keyFeatures KeyFeature[]
   createdAt   DateTime @default(now())

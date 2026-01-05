@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import Link from 'next/link'
 import { useHero } from '@/hooks/useHero'
 
 export default function Hero() {
@@ -36,8 +37,8 @@ export default function Hero() {
             </p>
 
             <div className="flex flex-wrap gap-4">
-              <a
-                href="#projects"
+              <Link
+                href="/projects"
                 className="bg-white text-blue-700 hover:bg-blue-50 px-6 py-3 rounded-lg font-medium transition duration-300 shadow-lg inline-flex items-center"
               >
                 <span>View My Work</span>
@@ -53,9 +54,9 @@ export default function Hero() {
                     clipRule="evenodd"
                   />
                 </svg>
-              </a>
-              <a
-                href="#contact"
+              </Link>
+              <Link
+                href="/contact"
                 className="bg-transparent border-2 border-white hover:bg-white hover:text-blue-700 px-6 py-3 rounded-lg font-medium transition duration-300 inline-flex items-center"
               >
                 <span>Contact Me</span>
@@ -68,7 +69,7 @@ export default function Hero() {
                   <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
                   <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
                 </svg>
-              </a>
+              </Link>
             </div>
 
             <div className="mt-8 flex space-x-4">

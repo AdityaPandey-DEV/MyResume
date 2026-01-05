@@ -2,18 +2,10 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import NavLink from './NavLink'
 
 export default function Header() {
   const [open, setOpen] = useState(false)
-  const pathname = usePathname()
-
-  const linkClass = (path: string) =>
-    `transition duration-300 ${
-      pathname === path
-        ? 'text-blue-600 font-semibold'
-        : 'text-gray-600 hover:text-blue-600'
-    }`
 
   return (
     <header className="sticky top-0 z-50 bg-white shadow-md py-4 print:hidden">
@@ -24,27 +16,12 @@ export default function Header() {
 
         {/* Desktop Menu */}
         <nav className="hidden md:flex space-x-8">
-          <Link href="/#about" className={linkClass('/#about')}>
-            About
-          </Link>
-          <Link href="/#skills" className={linkClass('/#skills')}>
-            Skills
-          </Link>
-          <Link href="/#projects" className={linkClass('/#projects')}>
-            Projects
-          </Link>
-          <Link href="/#education" className={linkClass('/#education')}>
-            Education
-          </Link>
-          <Link
-            href="/#certifications"
-            className={linkClass('/#certifications')}
-          >
-            Certifications
-          </Link>
-          <Link href="/#contact" className={linkClass('/#contact')}>
-            Contact
-          </Link>
+          <NavLink href="/about">About</NavLink>
+          <NavLink href="/skills">Skills</NavLink>
+          <NavLink href="/projects">Projects</NavLink>
+          <NavLink href="/education">Education</NavLink>
+          <NavLink href="/certifications">Certifications</NavLink>
+          <NavLink href="/contact">Contact</NavLink>
         </nav>
 
         {/* Mobile Toggle */}
@@ -72,48 +49,24 @@ export default function Header() {
       {open && (
         <div className="md:hidden bg-white shadow-lg absolute top-full left-0 right-0 z-20">
           <nav className="flex flex-col space-y-4 px-6 py-4">
-            <Link
-              href="/#about"
-              className={linkClass('/#about')}
-              onClick={() => setOpen(false)}
-            >
+            <NavLink href="/about" onClick={() => setOpen(false)}>
               About
-            </Link>
-            <Link
-              href="/#skills"
-              className={linkClass('/#skills')}
-              onClick={() => setOpen(false)}
-            >
+            </NavLink>
+            <NavLink href="/skills" onClick={() => setOpen(false)}>
               Skills
-            </Link>
-            <Link
-              href="/#projects"
-              className={linkClass('/#projects')}
-              onClick={() => setOpen(false)}
-            >
+            </NavLink>
+            <NavLink href="/projects" onClick={() => setOpen(false)}>
               Projects
-            </Link>
-            <Link
-              href="/#education"
-              className={linkClass('/#education')}
-              onClick={() => setOpen(false)}
-            >
+            </NavLink>
+            <NavLink href="/education" onClick={() => setOpen(false)}>
               Education
-            </Link>
-            <Link
-              href="/#certifications"
-              className={linkClass('/#certifications')}
-              onClick={() => setOpen(false)}
-            >
+            </NavLink>
+            <NavLink href="/certifications" onClick={() => setOpen(false)}>
               Certifications
-            </Link>
-            <Link
-              href="/#contact"
-              className={linkClass('/#contact')}
-              onClick={() => setOpen(false)}
-            >
+            </NavLink>
+            <NavLink href="/contact" onClick={() => setOpen(false)}>
               Contact
-            </Link>
+            </NavLink>
           </nav>
         </div>
       )}

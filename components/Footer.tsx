@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 export default function Footer() {
   return (
     <footer className="bg-gray-900 text-white py-12">
@@ -50,42 +52,42 @@ export default function Footer() {
           </p>
 
           <div className="flex flex-wrap justify-center gap-4">
-            <a
-              href="#about"
+            <Link
+              href="/about"
               className="text-gray-500 hover:text-white text-sm transition duration-300"
             >
               About
-            </a>
-            <a
-              href="#skills"
+            </Link>
+            <Link
+              href="/skills"
               className="text-gray-500 hover:text-white text-sm transition duration-300"
             >
               Skills
-            </a>
-            <a
-              href="#projects"
+            </Link>
+            <Link
+              href="/projects"
               className="text-gray-500 hover:text-white text-sm transition duration-300"
             >
               Projects
-            </a>
-            <a
-              href="#education"
+            </Link>
+            <Link
+              href="/education"
               className="text-gray-500 hover:text-white text-sm transition duration-300"
             >
               Education
-            </a>
-            <a
-              href="#certifications"
+            </Link>
+            <Link
+              href="/certifications"
               className="text-gray-500 hover:text-white text-sm transition duration-300"
             >
               Certifications
-            </a>
-            <a
-              href="#contact"
+            </Link>
+            <Link
+              href="/contact"
               className="text-gray-500 hover:text-white text-sm transition duration-300"
             >
               Contact
-            </a>
+            </Link>
           </div>
         </div>
       </div>

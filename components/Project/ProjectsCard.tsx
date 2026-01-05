@@ -1,3 +1,7 @@
+'use client'
+
+import Image from 'next/image'
+
 function TechnologyBadge({ tech }: { tech: string }) {
   return (
     <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs font-medium">
@@ -12,6 +16,7 @@ export default function ProjectsCard({
   technologies,
   icon,
   gradient,
+  imageUrl,
   githubLink,
   liveDemoLink,
 }: {
@@ -20,31 +25,44 @@ export default function ProjectsCard({
   technologies: string[]
   icon?: string
   gradient?: string
+  imageUrl?: string
   githubLink?: string
   liveDemoLink?: string
 }) {
   return (
     <div className="project-card bg-white rounded-xl overflow-hidden shadow-md border border-gray-100 animate-fade-in">
-      <div
-        className={`h-48 bg-gradient-to-r ${gradient || 'from-blue-400 to-indigo-500'} p-6 flex items-center justify-center relative overflow-hidden`}
-      >
-        <div className="absolute inset-0 bg-blue-500 opacity-20">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-full w-full text-white opacity-10"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
+      <div className="h-48 relative overflow-hidden bg-gray-200">
+        {imageUrl ? (
+          <Image
+            src={imageUrl}
+            alt={name}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          />
+        ) : (
+          <div
+            className={`h-full w-full bg-gradient-to-r ${gradient || 'from-blue-400 to-indigo-500'} p-6 flex items-center justify-center relative overflow-hidden`}
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="1"
-              d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"
-            />
-          </svg>
-        </div>
-        {icon && <i className={`${icon} text-white text-5xl z-10`}></i>}
+            <div className="absolute inset-0 bg-blue-500 opacity-20">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-full w-full text-white opacity-10"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1"
+                  d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"
+                />
+              </svg>
+            </div>
+            {icon && <i className={`${icon} text-white text-5xl z-10`}></i>}
+          </div>
+        )}
       </div>
 
       <div className="p-6">
