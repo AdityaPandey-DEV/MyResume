@@ -256,24 +256,36 @@ export default function ProjectsManager() {
   }
 
   const openFeaturedForm = (project: any) => {
-    const existing = featuredProjects?.find(
-      (fp) => fp.projectId === project.id
-    )
-    if (existing) {
-      setFeaturedProjectId(existing.id)
-      setValueFeatured('imageUrl', existing.imageUrl || '')
-      setValueFeatured('technologies', existing.technologies || [])
-      setValueFeatured(
-        'keyFeatures',
-        existing.keyFeatures.map((kf) => ({ feature: kf.feature })) || []
-      )
-    } else {
-      setFeaturedProjectId(null)
-      setSelectedProjectId(project.id)
-      resetFeatured()
-    }
-    setShowFeaturedForm(true)
+  const existing = featuredProjects?.find(
+    (fp) => fp.projectId === project.id
+  )
+
+  if (existing) {
+    setFeaturedProjectId(existing.id)
+    setSelectedProjectId(project.id)
+
+    // ✅ IMPORTANT: use resetFeatured, not setValueFeatured
+    resetFeatured({
+      imageUrl: existing.imageUrl || '',
+      technologies: existing.technologies || [],
+      keyFeatures:
+        existing.keyFeatures?.map((kf) => ({
+          feature: kf.feature,
+        })) || [],
+    })
+  } else {
+    setFeaturedProjectId(null)
+    setSelectedProjectId(project.id)
+
+    resetFeatured({
+      imageUrl: '',
+      technologies: [],
+      keyFeatures: [],
+    })
   }
+
+  setShowFeaturedForm(true)
+}
 
   const closeFeaturedForm = () => {
     setShowFeaturedForm(false)

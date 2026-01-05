@@ -10,8 +10,13 @@ import ProjectsManager from '@/components/admin/ProjectsManager'
 import SkillsManager from '@/components/admin/SkillsManager'
 import EducationManager from '@/components/admin/EducationManager'
 import CertificationsManager from '@/components/admin/CertificationsManager'
+import { revalidatePath } from 'next/cache'
 
 export default function AdminPage() {
+  revalidatePath('/')
+  revalidatePath('/projects')
+  revalidatePath('/skills')
+  revalidatePath('/education')
   const router = useRouter()
   const [activeTab, setActiveTab] = useState('hero')
 
