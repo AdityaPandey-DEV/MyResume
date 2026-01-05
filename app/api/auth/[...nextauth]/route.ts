@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 
 export const runtime = 'nodejs'
 
-export const authOptions = {
+const authConfig = {
   adapter: PrismaAdapter(prisma),
   providers: [
     GoogleProvider({
@@ -14,17 +14,17 @@ export const authOptions = {
     }),
   ],
   session: {
-    strategy: 'jwt',
+    strategy: 'jwt' as const, // ✅ FIX
   },
   pages: {
     signIn: '/admin/login',
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user }: any) {
       if (user) token.id = user.id
       return token
     },
-    async session({ session, token }) {
+    async session({ session, token }: any) {
       if (session.user) {
         session.user.id = token.id as string
       }
@@ -35,6 +35,6 @@ export const authOptions = {
   trustHost: true,
 }
 
-const { handlers } = NextAuth(authOptions)
+const { handlers } = NextAuth(authConfig)
 
 export const { GET, POST } = handlers
