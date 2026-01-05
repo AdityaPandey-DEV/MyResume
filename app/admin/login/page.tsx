@@ -30,7 +30,7 @@ export default function LoginPage() {
         setLoading(false)
       } else if (result?.ok) {
         // Wait a bit for session to be set
-        await new Promise((resolve) => setTimeout(resolve, 100))
+        await new Promise((resolve) => setTimeout(resolve, 1000))
         router.push('/admin')
         router.refresh()
       } else {
