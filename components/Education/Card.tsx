@@ -40,7 +40,7 @@ export default function EducationCard({
         >
           <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4">
             {icon && (
-              <i className={`fas ${icon} ${theme.pillText} text-2xl`}></i>
+              <i className={`fa-solid ${icon} ${theme.pillText} text-2xl`}></i>
             )}
           </div>
 
