@@ -1,70 +1,166 @@
-# Getting Started with Create React App
+# Resume Portfolio - Next.js Full Stack
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A modern, full-stack resume portfolio built with Next.js 15, TypeScript, Prisma, PostgreSQL, and NextAuth.
+
+## Features
+
+- **Full Stack Architecture**: Next.js 15 with App Router and TypeScript
+- **Database**: PostgreSQL with Prisma ORM
+- **Authentication**: NextAuth.js v5 for admin access
+- **Data Management**: Admin dashboard to manage all resume data
+- **Modern Tech Stack**: 
+  - React Query for data fetching
+  - Axios for HTTP requests
+  - React Hook Form with Zod validation
+  - Tailwind CSS for styling
+
+## Prerequisites
+
+- Node.js 18+ and npm
+- PostgreSQL database (local or cloud)
+- Git
+
+## Setup Instructions
+
+### 1. Install Dependencies
+
+```bash
+npm install
+```
+
+### 2. Set Up Environment Variables
+
+Create a `.env.local` file in the root directory:
+
+```env
+# Database
+DATABASE_URL="postgresql://user:password@localhost:5432/resume_db?schema=public"
+
+# NextAuth
+AUTH_SECRET="your-secret-key-here-generate-with-openssl-rand-base64-32"
+AUTH_URL="http://localhost:3000"
+
+# Admin Credentials (for initial setup)
+ADMIN_EMAIL="admin@example.com"
+ADMIN_PASSWORD="your-secure-password-here"
+```
+
+**Generate AUTH_SECRET:**
+```bash
+openssl rand -base64 32
+```
+
+### 3. Set Up Database
+
+```bash
+# Generate Prisma Client
+npm run prisma:generate
+
+# Run migrations
+npm run prisma:migrate
+
+# Seed the database with initial data
+npm run prisma:seed
+```
+
+### 4. Run Development Server
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) to view the portfolio.
+
+## Admin Dashboard
+
+Access the admin dashboard at `/admin` to manage all resume data:
+
+- **Hero Section**: Edit name, title, description, social links, and image
+- **About Section**: Manage journey, personal values, and focus areas
+- **Projects**: Add, edit, and delete projects
+- **Skills**: Manage skill categories, advanced skills, and soft skills
+- **Education**: Manage education entries
+- **Certifications**: Manage certifications
+
+**Login Credentials:**
+- Use the email and password set in `ADMIN_EMAIL` and `ADMIN_PASSWORD` environment variables
+
+## Project Structure
+
+```
+├── app/                    # Next.js App Router
+│   ├── api/               # API routes
+│   ├── admin/             # Admin dashboard
+│   ├── layout.tsx         # Root layout
+│   └── page.tsx           # Home page
+├── components/            # React components
+│   ├── admin/            # Admin components
+│   └── ...               # Public components
+├── hooks/                # Custom React Query hooks
+├── lib/                  # Utility libraries
+│   ├── axios.ts          # Axios configuration
+│   ├── prisma.ts         # Prisma client
+│   └── react-query.ts    # React Query setup
+├── prisma/               # Prisma files
+│   ├── schema.prisma     # Database schema
+│   └── seed.ts           # Seed script
+└── types/                # TypeScript types
+```
 
 ## Available Scripts
 
-In the project directory, you can run:
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint
+- `npm run prisma:generate` - Generate Prisma Client
+- `npm run prisma:migrate` - Run database migrations
+- `npm run prisma:seed` - Seed the database
+- `npm run prisma:studio` - Open Prisma Studio
 
-### `npm start`
+## Database Schema
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+The database includes models for:
+- **Hero**: Personal information and social links
+- **About**: Journey, values, and focus areas
+- **Projects**: Project details with technologies and links
+- **Skills**: Skill categories, advanced skills, and soft skills
+- **Education**: Education history
+- **Certifications**: Professional certifications
+- **User**: Admin authentication
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Deployment
 
-### `npm test`
+### Environment Variables
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Make sure to set all environment variables in your deployment platform:
 
-### `npm run build`
+- `DATABASE_URL` - PostgreSQL connection string
+- `AUTH_SECRET` - NextAuth secret
+- `AUTH_URL` - Your application URL
+- `ADMIN_EMAIL` - Admin email
+- `ADMIN_PASSWORD` - Admin password (hashed in database)
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Build and Deploy
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```bash
+npm run build
+npm run start
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Technologies Used
 
-### `npm run eject`
+- **Next.js 15** - React framework
+- **TypeScript** - Type safety
+- **Prisma** - Database ORM
+- **PostgreSQL** - Database
+- **NextAuth.js v5** - Authentication
+- **React Query** - Data fetching
+- **Axios** - HTTP client
+- **React Hook Form** - Form handling
+- **Zod** - Schema validation
+- **Tailwind CSS** - Styling
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## License
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+MIT
