@@ -2,7 +2,8 @@
 
 import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+
 import HeroEditor from '@/components/admin/HeroEditor'
 import AboutEditor from '@/components/admin/AboutEditor'
 import ProjectsManager from '@/components/admin/ProjectsManager'
@@ -11,15 +12,15 @@ import EducationManager from '@/components/admin/EducationManager'
 import CertificationsManager from '@/components/admin/CertificationsManager'
 
 export default function AdminPage() {
-  const { data: session, status } = useSession()
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState('hero')
-
-  useEffect(() => {
-    if (status === 'unauthenticated') {
+  const { data: session, status } = useSession({
+    required: true,
+    onUnauthenticated() {
       router.push('/admin/login')
-    }
-  }, [status, router])
+    },
+  })
+
+  const [activeTab, setActiveTab] = useState('hero')
 
   if (status === 'loading') {
     return (
@@ -29,10 +30,7 @@ export default function AdminPage() {
     )
   }
 
-  if (!session) {
-    return null
-  }
-
+  // session is GUARANTEED here
   const tabs = [
     { id: 'hero', label: 'Hero' },
     { id: 'about', label: 'About' },
@@ -46,12 +44,17 @@ export default function AdminPage() {
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white shadow-sm border-b">
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold gradient-text">Admin Dashboard</h1>
+          <h1 className="text-2xl font-bold gradient-text">
+            Admin Dashboard
+          </h1>
+
           <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600">{session.user?.email}</span>
+            <span className="text-sm text-gray-600">
+              {session.user?.email}
+            </span>
             <button
               onClick={() => signOut({ callbackUrl: '/' })}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition duration-300"
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
             >
               Logout
             </button>
@@ -62,7 +65,7 @@ export default function AdminPage() {
       <div className="container mx-auto px-6 py-8">
         <div className="bg-white rounded-lg shadow-sm">
           <div className="border-b border-gray-200">
-            <nav className="flex space-x-8 px-6" aria-label="Tabs">
+            <nav className="flex space-x-8 px-6">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
@@ -92,4 +95,3 @@ export default function AdminPage() {
     </div>
   )
 }
-
