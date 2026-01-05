@@ -17,88 +17,66 @@ export default function LoginPage() {
     setError('')
     setLoading(true)
 
-    try {
-      const result = await signIn('credentials', {
-        email,
-        password,
-        redirect: false,
-        callbackUrl: '/admin',
-      })
+    const result = await signIn('credentials', {
+      email,
+      password,
+      redirect: false, // 🔥 IMPORTANT
+    })
 
-      if (result?.error) {
-        setError(result.error)
-        setLoading(false)
-      } else if (result?.ok) {
-        // Wait a bit for session to be set
-        await new Promise((resolve) => setTimeout(resolve, 100))
-        router.push('/admin')
-        router.refresh()
-      } else {
-        setError('Login failed. Please try again.')
-        setLoading(false)
-      }
-    } catch (err) {
-      console.error('Login error:', err)
-      setError('An error occurred. Please try again.')
+    if (result?.error) {
+      setError('Invalid email or password')
       setLoading(false)
+      return
+    }
+
+    if (result?.ok) {
+      router.replace('/admin') // ✅ clean redirect
     }
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-700 to-indigo-800">
       <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
-        <h1 className="text-3xl font-bold text-center mb-6 gradient-text">
+        <h1 className="text-3xl font-bold text-center mb-6">
           Admin Login
         </h1>
 
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <div className="bg-red-100 text-red-700 px-4 py-2 rounded mb-4">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="admin@example.com"
-            />
-          </div>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            placeholder="Email"
+            className="w-full px-4 py-2 border rounded"
+          />
 
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="••••••••"
-            />
-          </div>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            placeholder="Password"
+            className="w-full px-4 py-2 border rounded"
+          />
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-blue-600 text-white py-2 rounded disabled:opacity-50"
           >
-            {loading ? 'Logging in...' : 'Login'}
+            {loading ? 'Logging in…' : 'Login'}
           </button>
         </form>
 
         <div className="mt-4 text-center">
-          <Link href="/" className="text-blue-600 hover:text-blue-800 text-sm">
+          <Link href="/" className="text-blue-600 text-sm">
             ← Back to Home
           </Link>
         </div>
@@ -106,4 +84,3 @@ export default function LoginPage() {
     </div>
   )
 }
-
