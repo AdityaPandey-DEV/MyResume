@@ -1,18 +1,17 @@
+import { prisma } from '@/lib/prisma'
+
 export async function getFeaturedProjects() {
   try {
-    const res = await fetch(
-      `${process.env.AUTH_URL}/api/featured-projects`,
-      {
-        next: {
-          revalidate: 3600, // 1 hour cache
+    const featuredProjects = await prisma.featuredProject.findMany({
+      include: {
+        project: true,
+        keyFeatures: {
+          orderBy: { order: 'asc' },
         },
-      }
-    )
-
-    if (!res.ok) return []
-
-    const data = await res.json()
-    return Array.isArray(data) ? data : []
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+    return featuredProjects
   } catch (error) {
     console.error('Error fetching featured projects:', error)
     return []

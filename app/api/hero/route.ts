@@ -24,33 +24,33 @@ export async function PUT(request: NextRequest) {
 
     // Check if hero exists
     const existing = await prisma.hero.findFirst()
-    
+
     const hero = existing
       ? await prisma.hero.update({
-          where: { id: existing.id },
-          data: {
-            name,
-            title,
-            description,
-            imageUrl,
-            linkedinUrl,
-            githubUrl,
-            email,
-            leetcodeUrl,
-          },
-        })
+        where: { id: existing.id },
+        data: {
+          name,
+          title,
+          description,
+          imageUrl,
+          linkedinUrl,
+          githubUrl,
+          email,
+          leetcodeUrl,
+        },
+      })
       : await prisma.hero.create({
-          data: {
-            name,
-            title,
-            description,
-            imageUrl,
-            linkedinUrl,
-            githubUrl,
-            email,
-            leetcodeUrl,
-          },
-        })
+        data: {
+          name,
+          title,
+          description,
+          imageUrl,
+          linkedinUrl,
+          githubUrl,
+          email,
+          leetcodeUrl,
+        },
+      })
 
     return NextResponse.json(hero)
   } catch (error) {

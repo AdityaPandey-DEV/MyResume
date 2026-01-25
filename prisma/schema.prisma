@@ -57,6 +57,32 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
+model CodingProfile {
+  id             String   @id @default(cuid())
+  platform       String   @unique // "leetcode", "codeforces"
+  username       String?
+  rating         Int?
+  globalRank     Int?     // For LeetCode/Codeforces
+  solvedCount    Int?
+  easySolved     Int?
+  mediumSolved   Int?
+  hardSolved     Int?
+  contestCount   Int?     // For Codeforces
+  maxRating      Int?     // For Codeforces
+  rank           String?  // e.g., "Grandmaster"
+  lastSyncedAt   DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model AdminSettings {
+  id             String   @id @default(cuid())
+  key            String   @unique // e.g., "GEMINI_API_KEY", "LEETCODE_USERNAME", "GITHUB_USERNAME"
+  value          String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
 // Hero Section
 model Hero {
   id          String   @id @default(cuid())
@@ -142,7 +168,11 @@ model Project {
   gradient    String?
   imageUrl    String?
   githubUrl   String?
+  repoUrl     String?  // For auto-syncing from GitHub
   liveDemoUrl String?
+  syncEnabled Boolean  @default(false)
+  isVisible   Boolean  @default(false) // Default hidden for imports
+  lastSyncedAt DateTime?
   order       Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -240,6 +270,7 @@ model Education {
   @@index([order])
 }
 
+
 // Certifications
 model Certification {
   id             String   @id @default(cuid())
@@ -249,12 +280,56 @@ model Certification {
   date           String
   tags           String[]
   certificateUrl String?
+  imageUrl       String? // For the PDF thumbnail/preview
   icon           String?
   color          String?
   order          Int      @default(0)
+  isVisible      Boolean  @default(false)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   @@index([order])
+}
+
+// Work Experience
+model Experience {
+  id          String   @id @default(cuid())
+  position    String
+  company     String
+  duration    String
+  location    String?
+  description String   @db.Text
+  logo        String?
+  skills      String[]
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([order])
+}
+
+// Testimonials (LinkedIn Recommendations)
+model Testimonial {
+  id          String   @id @default(cuid())
+  name        String
+  role        String
+  company     String?
+  content     String   @db.Text
+  imageUrl    String?
+  linkedinUrl String?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([order])
+}
+
+// Social Stats (Connections, Followers, etc.)
+model SocialStat {
+  id        String   @id @default(cuid())
+  platform  String   @unique // "linkedin", "github", "twitter"
+  followers Int      @default(0)
+  connections Int    @default(0)
+  lastSyncedAt DateTime @default(now())
 }
 

@@ -31,6 +31,7 @@ export default function CertificationsClient({ certifications }: Props) {
               date={cert.date}
               tags={cert.tags?.join(', ') || ''}
               certificateLink={cert.certificateUrl || '#'}
+              imageUrl={cert.imageUrl}
             />
           ))}
         </div>

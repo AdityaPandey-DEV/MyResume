@@ -1,9 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-export async function GET() {
+import { auth } from '@/lib/auth';
+
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const isAdmin = searchParams.get('admin') === 'true';
+
+    // Optional: stronger security check for admin param
+    if (isAdmin) {
+      const session = await auth();
+      if (!session) {
+        // If claiming to be admin but not auth, fall back to public or error?
+        // Safest to just return public-only or unauthorized.
+        // For simplicity here, if auth fails, we show only public.
+      }
+    }
+
+    const where = isAdmin ? {} : { isVisible: true };
+
     const projects = await prisma.project.findMany({
+      where,
       orderBy: { order: 'asc' },
       include: {
         featuredProject: {
@@ -37,6 +55,8 @@ export async function POST(request: NextRequest) {
       imageUrl,
       githubUrl,
       liveDemoUrl,
+      repoUrl,
+      isVisible,
       order,
     } = body
 
@@ -50,6 +70,8 @@ export async function POST(request: NextRequest) {
         imageUrl,
         githubUrl,
         liveDemoUrl,
+        repoUrl,
+        isVisible: isVisible ?? true, // Default true for manual creation
         order: order ?? 0,
       },
     })

@@ -1,18 +1,12 @@
+import { prisma } from '@/lib/prisma'
+
 export async function getEducation() {
   try {
-    const res = await fetch(
-      `${process.env.AUTH_URL}/api/education`,
-      {
-        next: {
-          revalidate: 3600, // 1 hour cache
-        },
-      }
-    )
+    const education = await prisma.education.findMany({
+      orderBy: { order: 'asc' },
+    })
 
-    if (!res.ok) return []
-
-    const data = await res.json()
-    return Array.isArray(data) ? data : []
+    return education
   } catch (error) {
     console.error('Error fetching education:', error)
     return []

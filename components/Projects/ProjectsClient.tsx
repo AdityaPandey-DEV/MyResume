@@ -64,6 +64,9 @@ export default function ProjectsClient({
                   imageUrl={project.imageUrl}
                   githubLink={project.githubUrl}
                   liveDemoLink={project.liveDemoUrl}
+                  repoUrl={project.repoUrl}
+                  syncEnabled={project.syncEnabled}
+                  lastSyncedAt={project.lastSyncedAt ? new Date(project.lastSyncedAt) : undefined}
                 />
               ))}
             </div>

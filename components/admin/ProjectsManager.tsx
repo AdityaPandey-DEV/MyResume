@@ -23,6 +23,8 @@ const projectSchema = z.object({
   imageUrl: z.string().optional(),
   githubUrl: z.string().url().optional().or(z.literal('')),
   liveDemoUrl: z.string().url().optional().or(z.literal('')),
+  repoUrl: z.string().url().optional().or(z.literal('')),
+  isVisible: z.boolean().default(true),
   order: z.number().default(0),
 })
 
@@ -52,6 +54,7 @@ export default function ProjectsManager() {
   )
   const [uploadingImage, setUploadingImage] = useState(false)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<'active' | 'inactive'>('active')
 
   const { data: featuredProjects } = useFeaturedProjects()
   const createFeaturedMutation = useCreateFeaturedProject()
@@ -61,10 +64,16 @@ export default function ProjectsManager() {
   const { data: projects, isLoading } = useQuery({
     queryKey: ['projects'],
     queryFn: async () => {
-      const res = await axios.get('/projects')
+      // Assuming axios base url or interceptor handles /api prefix effectively,
+      // But if it's set to localhost:3000/api, we append /projects?admin=true
+      const res = await axios.get('/projects?admin=true')
       return res.data
     },
   })
+
+  const filteredProjects = projects?.filter((p: any) =>
+    activeTab === 'active' ? (p.isVisible !== false) : (p.isVisible === false)
+  );
 
   const createMutation = useMutation({
     mutationFn: async (data: ProjectFormData) => {
@@ -195,6 +204,8 @@ export default function ProjectsManager() {
     setValue('imageUrl', project.imageUrl || '')
     setValue('githubUrl', project.githubUrl || '')
     setValue('liveDemoUrl', project.liveDemoUrl || '')
+    setValue('repoUrl', project.repoUrl || '')
+    setValue('isVisible', project.isVisible ?? true)
     setValue('order', project.order || 0)
     setImagePreview(project.imageUrl || null)
   }
@@ -256,36 +267,36 @@ export default function ProjectsManager() {
   }
 
   const openFeaturedForm = (project: any) => {
-  const existing = featuredProjects?.find(
-    (fp) => fp.projectId === project.id
-  )
+    const existing = featuredProjects?.find(
+      (fp) => fp.projectId === project.id
+    )
 
-  if (existing) {
-    setFeaturedProjectId(existing.id)
-    setSelectedProjectId(project.id)
+    if (existing) {
+      setFeaturedProjectId(existing.id)
+      setSelectedProjectId(project.id)
 
-    // ✅ IMPORTANT: use resetFeatured, not setValueFeatured
-    resetFeatured({
-      imageUrl: existing.imageUrl || '',
-      technologies: existing.technologies || [],
-      keyFeatures:
-        existing.keyFeatures?.map((kf) => ({
-          feature: kf.feature,
-        })) || [],
-    })
-  } else {
-    setFeaturedProjectId(null)
-    setSelectedProjectId(project.id)
+      // ✅ IMPORTANT: use resetFeatured, not setValueFeatured
+      resetFeatured({
+        imageUrl: existing.imageUrl || '',
+        technologies: existing.technologies || [],
+        keyFeatures:
+          existing.keyFeatures?.map((kf) => ({
+            feature: kf.feature,
+          })) || [],
+      })
+    } else {
+      setFeaturedProjectId(null)
+      setSelectedProjectId(project.id)
 
-    resetFeatured({
-      imageUrl: '',
-      technologies: [],
-      keyFeatures: [],
-    })
+      resetFeatured({
+        imageUrl: project.imageUrl || '',
+        technologies: project.technologies || [],
+        keyFeatures: [],
+      })
+    }
+
+    setShowFeaturedForm(true)
   }
-
-  setShowFeaturedForm(true)
-}
 
   const closeFeaturedForm = () => {
     setShowFeaturedForm(false)
@@ -367,15 +378,31 @@ export default function ProjectsManager() {
     <div>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold">Projects</h2>
-        <button
-          onClick={() => {
-            setShowForm(!showForm)
-            resetForm()
-          }}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-        >
-          {showForm ? 'Cancel' : '+ Add Project'}
-        </button>
+        <div className="flex gap-4">
+          <div className="flex bg-gray-100 p-1 rounded-lg">
+            <button
+              onClick={() => setActiveTab('active')}
+              className={`px-4 py-1.5 rounded-md text-sm font-medium transition ${activeTab === 'active' ? 'bg-white shadow text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              Active
+            </button>
+            <button
+              onClick={() => setActiveTab('inactive')}
+              className={`px-4 py-1.5 rounded-md text-sm font-medium transition ${activeTab === 'inactive' ? 'bg-white shadow text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              Inactive
+            </button>
+          </div>
+          <button
+            onClick={() => {
+              setShowForm(!showForm)
+              resetForm()
+            }}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            {showForm ? 'Cancel' : '+ Add Project'}
+          </button>
+        </div>
       </div>
 
       {showForm && (
@@ -391,9 +418,40 @@ export default function ProjectsManager() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Description
-            </label>
+            <div className="flex justify-between items-center mb-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Description
+              </label>
+              <button
+                type="button"
+                onClick={async () => {
+                  const repoUrl = watch('repoUrl');
+                  const currentDesc = watch('description');
+                  if (!repoUrl && !currentDesc) {
+                    toast.error('Please enter a GitHub Repo URL or initial description');
+                    return;
+                  }
+
+                  try {
+                    toast.loading('Generating description...', { id: 'gen-desc' });
+                    const res = await axios.post('/generate/project-desc', {
+                      currentDescription: currentDesc,
+                      repoUrl: repoUrl
+                    });
+
+                    if (res.data.success) {
+                      setValue('description', res.data.description);
+                      toast.success('Description generated!', { id: 'gen-desc' });
+                    }
+                  } catch (e) {
+                    toast.error('Failed to generate', { id: 'gen-desc' });
+                  }
+                }}
+                className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded hover:bg-purple-200 flex items-center gap-1"
+              >
+                ✨ AI Enhance
+              </button>
+            </div>
             <textarea
               {...register('description')}
               rows={4}
@@ -509,6 +567,22 @@ export default function ProjectsManager() {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg"
               />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                GitHub Repo URL (for Sync)
+              </label>
+              <input
+                {...register('repoUrl')}
+                placeholder="https://github.com/user/repo"
+                className="w-full px-4 py-2 border border-blue-300 rounded-lg bg-blue-50"
+              />
+            </div>
+            <div className="flex items-end pb-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" {...register('isVisible')} className="w-4 h-4" />
+                <span className="text-sm font-medium text-gray-700">Visible on Resume</span>
+              </label>
+            </div>
           </div>
 
           <button
@@ -554,9 +628,42 @@ export default function ProjectsManager() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Technologies (for spotlight)
-                </label>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Technologies (for spotlight)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const project = projects?.find((p: any) => p.id === (selectedProjectId || featuredProjects?.find(fp => fp.id === featuredProjectId)?.projectId));
+                      const repoUrl = project?.repoUrl;
+
+                      if (!repoUrl) {
+                        toast.error('Project does not have a Repo URL');
+                        return;
+                      }
+
+                      try {
+                        toast.loading('Analysing README...', { id: 'gen-details' });
+                        const res = await axios.post('/generate/featured-details', { repoUrl });
+
+                        if (res.data) {
+                          if (res.data.technologies) setValueFeatured('technologies', res.data.technologies);
+                          if (res.data.keyFeatures) {
+                            const features = res.data.keyFeatures.map((f: string) => ({ feature: f }));
+                            setValueFeatured('keyFeatures', features);
+                          }
+                          toast.success('Generated from README!', { id: 'gen-details' });
+                        }
+                      } catch (e) {
+                        toast.error('Failed to generate details', { id: 'gen-details' });
+                      }
+                    }}
+                    className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded hover:bg-purple-200 flex items-center gap-1"
+                  >
+                    ✨ AI Generate Details
+                  </button>
+                </div>
                 <div className="flex flex-wrap gap-2 mb-2">
                   {featuredTechnologies.map((tech, index) => (
                     <span
@@ -639,7 +746,10 @@ export default function ProjectsManager() {
       )}
 
       <div className="space-y-4">
-        {projects?.map((project: any) => {
+        {filteredProjects?.length === 0 && (
+          <div className="text-gray-500 py-4 text-center">No projects in {activeTab} list.</div>
+        )}
+        {filteredProjects?.map((project: any) => {
           const isFeatured = isProjectFeatured(project.id)
           const featuredProject = getFeaturedProject(project.id)
 
@@ -656,6 +766,11 @@ export default function ProjectsManager() {
                       ⭐ Featured
                     </span>
                   )}
+                  {!project.isVisible && (
+                    <span className="bg-gray-100 text-gray-500 px-2 py-1 rounded text-xs font-medium border border-gray-300">
+                      Hidden
+                    </span>
+                  )}
                 </div>
                 <p className="text-gray-600 text-sm mt-1">{project.description}</p>
                 <div className="flex flex-wrap gap-2 mt-2">
@@ -669,13 +784,61 @@ export default function ProjectsManager() {
                   ))}
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap justify-end">
+                <button
+                  onClick={() => {
+                    updateMutation.mutate({
+                      id: project.id,
+                      data: { ...project, isVisible: !project.isVisible }
+                    });
+                  }}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium ${project.isVisible ? 'bg-gray-200 text-gray-700 hover:bg-gray-300' : 'bg-green-100 text-green-700 hover:bg-green-200'}`}
+                >
+                  {project.isVisible ? 'Hide' : 'Show'}
+                </button>
                 <button
                   onClick={() => startEdit(project)}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                 >
                   Edit
                 </button>
+                {project.repoUrl && (
+                  <button
+                    onClick={async () => {
+                      if (confirm('Sync this project from GitHub?')) {
+                        try {
+                          await axios.post('/sync/github', { repoUrl: project.repoUrl, projectId: project.id });
+                          toast.success('Project synced!');
+                          queryClient.invalidateQueries({ queryKey: ['projects'] });
+                        } catch (e: any) {
+                          console.error(e);
+                          toast.error(e.response?.data?.error || e.message || 'Sync failed');
+                        }
+                      }
+                    }}
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                  >
+                    Sync
+                  </button>
+                )}
+                {project.liveDemoUrl && (
+                  <button
+                    onClick={async () => {
+                      try {
+                        toast.loading('Updating image...', { id: 'image-sync' });
+                        await axios.post('/sync/image', { liveDemoUrl: project.liveDemoUrl, projectId: project.id });
+                        toast.success('Image updated!', { id: 'image-sync' });
+                        queryClient.invalidateQueries({ queryKey: ['projects'] });
+                      } catch (e: any) {
+                        console.error(e);
+                        toast.error(e.response?.data?.error || e.message || 'Image update failed', { id: 'image-sync' });
+                      }
+                    }}
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                  >
+                    Sync Image
+                  </button>
+                )}
                 {isFeatured ? (
                   <>
                     <button
@@ -688,7 +851,7 @@ export default function ProjectsManager() {
                       onClick={() => removeFeatured(featuredProject!.id)}
                       className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
                     >
-                      Remove Featured
+                      Remove
                     </button>
                   </>
                 ) : (
@@ -696,7 +859,7 @@ export default function ProjectsManager() {
                     onClick={() => openFeaturedForm(project)}
                     className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
                   >
-                    Mark as Featured
+                    Feature
                   </button>
                 )}
                 <button

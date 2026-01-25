@@ -45,6 +45,7 @@ export async function PUT(
       icon,
       color,
       order,
+      isVisible, // Allow updating visibility
     } = body
 
     const certification = await prisma.certification.update({
@@ -59,6 +60,7 @@ export async function PUT(
         icon,
         color,
         order,
+        isVisible,
       },
     })
 

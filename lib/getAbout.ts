@@ -1,14 +1,27 @@
-// lib/getAbout.ts
-export async function getAbout() {
-  const res = await fetch(
-    `${process.env.AUTH_URL}/api/about`,
-    {
-      next: {
-        revalidate: 3600, // 1 hour cache
-      },
-    }
-  )
+import { prisma } from '@/lib/prisma'
 
-  if (!res.ok) return null
-  return res.json()
+export async function getAbout() {
+  try {
+    const about = await prisma.about.findFirst({
+      include: {
+        journey: {
+          include: {
+            paragraphs: {
+              orderBy: { order: 'asc' },
+            },
+          },
+        },
+        values: {
+          orderBy: { order: 'asc' },
+        },
+        focusAreas: {
+          orderBy: { order: 'asc' },
+        },
+      },
+    })
+    return about
+  } catch (error) {
+    console.error('Error fetching about:', error)
+    return null
+  }
 }

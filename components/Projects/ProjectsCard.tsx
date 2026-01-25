@@ -19,6 +19,9 @@ export default function ProjectsCard({
   imageUrl,
   githubLink,
   liveDemoLink,
+  repoUrl,
+  syncEnabled,
+  lastSyncedAt,
 }: {
   name: string
   description: string
@@ -28,6 +31,9 @@ export default function ProjectsCard({
   imageUrl?: string
   githubLink?: string
   liveDemoLink?: string
+  repoUrl?: string
+  syncEnabled?: boolean
+  lastSyncedAt?: Date
 }) {
   return (
     <div className="project-card bg-white rounded-xl overflow-hidden shadow-md border border-gray-100 animate-fade-in">
@@ -66,7 +72,14 @@ export default function ProjectsCard({
       </div>
 
       <div className="p-6">
-        <h3 className="text-xl font-bold mb-2 text-gray-800">{name}</h3>
+        <div className="flex justify-between items-start mb-2">
+          <h3 className="text-xl font-bold text-gray-800">{name}</h3>
+          {syncEnabled && (
+            <span title={`Synced: ${lastSyncedAt?.toLocaleDateString()}`} className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full border border-green-200">
+              <i className="fas fa-sync-alt mr-1 animate-spin-slow"></i> Auto-Synced
+            </span>
+          )}
+        </div>
         <p className="text-gray-600 mb-4">{description}</p>
         <div className="mb-5 flex flex-wrap gap-2">
           {technologies.map((tech, index) => (

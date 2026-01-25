@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     const featuredProject = await prisma.featuredProject.create({
       data: {
         projectId,
-        imageUrl: imageUrl || null,
+        imageUrl: imageUrl || project.imageUrl || null,
         technologies: technologies || [],
         keyFeatures: {
           create: (keyFeatures || []).map((feature: string, index: number) => ({
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
         },
       },
     })
-     revalidatePath('/')
+    revalidatePath('/')
 
 
     return NextResponse.json(featuredProject, { status: 201 })

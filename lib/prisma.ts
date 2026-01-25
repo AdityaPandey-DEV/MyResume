@@ -10,5 +10,10 @@ export const prisma =
     log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
   })
 
+
+
+
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+
+// Force reload: 2026-01-25 23:18
 

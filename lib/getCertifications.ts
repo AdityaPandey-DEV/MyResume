@@ -1,29 +1,14 @@
+import { prisma } from '@/lib/prisma'
+
 export async function getCertifications() {
   try {
-    const res = await fetch(
-      `${process.env.AUTH_URL}/api/certifications`,
-      {
-        next: {
-          revalidate: 3600,
-        },
-      }
-    )
+    const certifications = await prisma.certification.findMany({
+      orderBy: { order: 'asc' },
+    })
 
-    if (!res.ok) {
-      console.error('Failed to fetch certifications:', res.status)
-      return []            // ✅ ALWAYS return array
-    }
-
-    const data = await res.json()
-
-    // 🔒 Safety guard
-    if (!Array.isArray(data)) {
-      return []
-    }
-
-    return data
+    return certifications
   } catch (error) {
     console.error('Error fetching certifications:', error)
-    return []              // ✅ ALWAYS return array
+    return []
   }
 }

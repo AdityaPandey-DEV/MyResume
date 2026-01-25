@@ -1,18 +1,29 @@
+import { prisma } from '@/lib/prisma'
+
 export async function getSkills() {
   try {
-    const res = await fetch(
-      `${process.env.AUTH_URL}/api/skills`,
-      {
-        next: {
-          revalidate: 3600, // 1 hour cache
+    const categories = await prisma.skillCategory.findMany({
+      orderBy: { order: 'asc' },
+      include: {
+        skills: {
+          orderBy: { order: 'asc' },
         },
-      }
-    )
+      },
+    })
 
-    if (!res.ok) return null
+    const advancedSkills = await prisma.advancedSkill.findMany({
+      orderBy: { order: 'asc' },
+    })
 
-    const data = await res.json()
-    return data ?? null
+    const softSkills = await prisma.softSkill.findMany({
+      orderBy: { order: 'asc' },
+    })
+
+    return {
+      categories,
+      advancedSkills,
+      softSkills,
+    }
   } catch (error) {
     console.error('Error fetching skills:', error)
     return null

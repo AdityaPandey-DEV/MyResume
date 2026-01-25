@@ -1,13 +1,11 @@
-export async function getHero() {
-  const res = await fetch(
-    `${process.env.AUTH_URL}/api/hero`,
-    {
-      next: {
-        revalidate: 3600, // 1 hour cache
-      },
-    }
-  )
+import { prisma } from '@/lib/prisma'
 
-  if (!res.ok) return null
-  return res.json()
+export async function getHero() {
+  try {
+    const hero = await prisma.hero.findFirst()
+    return hero
+  } catch (error) {
+    console.error('Error fetching hero:', error)
+    return null
+  }
 }

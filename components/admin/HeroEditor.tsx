@@ -24,12 +24,13 @@ type HeroFormData = z.infer<typeof heroSchema>
 export default function HeroEditor() {
   const queryClient = useQueryClient()
 
-  const { data: hero, isLoading } = useQuery({
+  const { data: hero, isLoading, refetch } = useQuery({
     queryKey: ['hero'],
     queryFn: async () => {
       const res = await axios.get('/hero')
       return res.data
     },
+    refetchOnWindowFocus: true, // Refetch when user switches tab back from LinkedIn
   })
 
   const mutation = useMutation({

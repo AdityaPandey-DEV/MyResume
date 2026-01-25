@@ -1,5 +1,6 @@
 import Header from '@/components/Header'
 import Hero from '@/components/Hero/HeroServer'
+import DSASection from '@/components/DSASection'
 import About from '@/components/AboutMe'
 import FeaturedProjects from '@/components/FeaturedProjects/index'
 import Projects from '@/components/Projects/index'
@@ -15,6 +16,7 @@ export default function Home() {
       <Header />
       <Hero />
       <About />
+      <DSASection />
       <FeaturedProjects />
       <Projects />
       <Skills />

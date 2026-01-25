@@ -10,6 +10,7 @@ import ProjectsManager from '@/components/admin/ProjectsManager'
 import SkillsManager from '@/components/admin/SkillsManager'
 import EducationManager from '@/components/admin/EducationManager'
 import CertificationsManager from '@/components/admin/CertificationsManager'
+import SyncManager from '@/components/admin/SyncManager'
 
 export default function AdminPage() {
   const router = useRouter()
@@ -38,6 +39,7 @@ export default function AdminPage() {
     { id: 'skills', label: 'Skills' },
     { id: 'education', label: 'Education' },
     { id: 'certifications', label: 'Certifications' },
+    { id: 'sync', label: 'Sync & Settings' },
   ]
 
   return (
@@ -64,16 +66,15 @@ export default function AdminPage() {
       <div className="container mx-auto px-6 py-8">
         <div className="bg-white rounded-lg shadow-sm">
           <div className="border-b border-gray-200">
-            <nav className="flex space-x-8 px-6">
+            <nav className="flex space-x-8 px-6 overflow-x-auto">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                    activeTab === tab.id
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${activeTab === tab.id
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
                 >
                   {tab.label}
                 </button>
@@ -88,6 +89,7 @@ export default function AdminPage() {
             {activeTab === 'skills' && <SkillsManager />}
             {activeTab === 'education' && <EducationManager />}
             {activeTab === 'certifications' && <CertificationsManager />}
+            {activeTab === 'sync' && <SyncManager />}
           </div>
         </div>
       </div>
