@@ -38,10 +38,8 @@ export async function getOgImage(url: string): Promise<string | null> {
 
 // Helper to getting a screenshot URL
 export function getScreenshotUrl(url: string): string {
-    // Using a more direct service for img tags
-    // We'll try the Microlink direct screenshot redirect or a similar public service
-    return `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true&embed=screenshot.url`;
-    // Note: If this still fails, 11ty or other services are alternatives.
+    // Using Microlink with a 3-second wait for full page rendering
+    return `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true&embed=screenshot.url&waitFor=3000`;
 }
 
 function resolveUrl(baseUrl: string, relativeUrl: string): string {
