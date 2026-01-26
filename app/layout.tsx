@@ -9,6 +9,9 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'Aditya Pandey',
   description: 'B.Tech CSE Student & Full Stack Developer',
+  verification: {
+    google: 'UR_Y_1at0EsezO21DXKn0x9NwST0G1mKMjh4fm1Qxdc',
+  },
 }
 
 export default function RootLayout({
