@@ -11,6 +11,8 @@ import SkillsManager from '@/components/admin/SkillsManager'
 import EducationManager from '@/components/admin/EducationManager'
 import CertificationsManager from '@/components/admin/CertificationsManager'
 import SyncManager from '@/components/admin/SyncManager'
+import JobHunter from '@/components/admin/JobHunter'
+import RoadmapManager from '@/components/admin/RoadmapManager'
 import CareerInsights from '@/components/admin/CareerInsights'
 
 export default function AdminPage() {
@@ -41,6 +43,8 @@ export default function AdminPage() {
     { id: 'education', label: 'Education' },
     { id: 'certifications', label: 'Certifications' },
     { id: 'insights', label: 'AI Career Advisor' },
+    { id: 'jobs', label: 'AI Job Hunter' },
+    { id: 'roadmap', label: 'Career Roadmap' },
     { id: 'sync', label: 'Sync & Settings' },
   ]
 
@@ -92,6 +96,8 @@ export default function AdminPage() {
             {activeTab === 'education' && <EducationManager />}
             {activeTab === 'certifications' && <CertificationsManager />}
             {activeTab === 'insights' && <CareerInsights />}
+            {activeTab === 'jobs' && <JobHunter />}
+            {activeTab === 'roadmap' && <RoadmapManager />}
             {activeTab === 'sync' && <SyncManager />}
           </div>
         </div>

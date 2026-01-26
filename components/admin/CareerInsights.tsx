@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import toast from 'react-hot-toast'
 
 type Analysis = {
     holisticPersona: string
@@ -61,6 +62,21 @@ export default function CareerInsights() {
     useEffect(() => {
         fetchInsights()
     }, [])
+
+    const addToRoadmap = async (title: string, description: string, type: string) => {
+        try {
+            const res = await fetch('/api/career/roadmap', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, description: `Learning Path: ${description}`, type: 'skill', order: 0 })
+            })
+            if ((await res.json()).success) {
+                toast.success('Added to your Career Roadmap! 🚀')
+            }
+        } catch (e) {
+            console.error(e)
+        }
+    }
 
     const addSkill = async (title: string, type: string) => {
         try {
@@ -209,6 +225,12 @@ export default function CareerInsights() {
                                                     Start Learning
                                                 </button>
                                             )}
+                                            <button
+                                                onClick={() => addToRoadmap(s.title, s.description, s.type)}
+                                                className="px-3 py-1 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded-lg hover:bg-indigo-100 transition whitespace-nowrap"
+                                            >
+                                                Track Milestone
+                                            </button>
                                             <a
                                                 href={`https://www.google.com/search?q=${encodeURIComponent(s.title + " " + s.type)}`}
                                                 target="_blank"

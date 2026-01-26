@@ -361,3 +361,45 @@ model CareerSuggestion {
 
   @@index([type])
 }
+
+model JobHunterProfile {
+  id              String   @id @default(cuid())
+  resumeUrl       String?
+  targetRoles     String[]
+  preferredCities String[]
+  isActivelyLooking Boolean @default(true)
+  updatedAt       DateTime @updatedAt
+}
+
+model TargetJob {
+  id              String   @id @default(cuid())
+  company         String
+  role            String
+  location        String?
+  jobUrl          String?
+  hrName          String?
+  hrEmail         String?
+  hrLinkedIn      String?
+  referralEmail   String?  @db.Text // AI Generated
+  referralLinkedIn String? @db.Text // AI Generated
+  connectionNote  String?  @db.Text // AI Generated
+  status          String   @default("Saved") // "Saved", "Applied", "Interviewing", "Offer", "Rejected"
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([status])
+}
+
+model RoadmapItem {
+  id              String   @id @default(cuid())
+  title           String
+  description     String   @db.Text
+  targetDate      String?
+  isCompleted     Boolean  @default(false)
+  type            String   // "skill", "job", "certificate", "milestone"
+  order           Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([order])
+}

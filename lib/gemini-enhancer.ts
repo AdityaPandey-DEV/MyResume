@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { prisma } from "./prisma";
 
-export async function enhanceContent(text: string, type: 'about' | 'experience' | 'skills' | 'projects' | 'hero-title' | 'hero-description' | 'project-icon' | 'holistic-analysis' | 'career-suggestions'): Promise<string> {
+export async function enhanceContent(text: string, type: 'about' | 'experience' | 'skills' | 'projects' | 'hero-title' | 'hero-description' | 'project-icon' | 'holistic-analysis' | 'career-suggestions' | 'job-outreach'): Promise<string> {
     let apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
@@ -126,6 +126,25 @@ export async function enhanceContent(text: string, type: 'about' | 'experience' 
                   ...
                 ]
                 Persona Context: "${text}"
+                `;
+            } else if (type as any === 'job-outreach') {
+                prompt = `
+                Based on the user's holistic professional persona and the provided job/HR details:
+                Generate 3 distinct outreach messages:
+                1. A professional Referral Email (Subject + Body).
+                2. A personalized LinkedIn Referral Message (max 100 words).
+                3. A concise LinkedIn Connection Note (max 300 characters).
+                
+                - Highlight specific strengths (GitHub projects, LeetCode rank, etc.) relevant to the company.
+                - Use a professional yet conversational tone.
+                - Return strictly a JSON object: 
+                {
+                  "referralEmail": "Subject: ...\\n\\nDear...",
+                  "referralLinkedIn": "Hi [Name], I've been following [Company]...",
+                  "connectionNote": "Hi [Name], I'm a developer specializing in [Tech]..."
+                }
+                
+                User Context: "${text}"
                 `;
             } else if (type as any === 'project-icon') {
                 prompt = `

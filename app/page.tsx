@@ -7,6 +7,7 @@ import Projects from '@/components/Projects/index'
 import Skills from '@/components/Skills/index'
 import Certifications from '@/components/Certifications'
 import Education from '@/components/Education/index'
+import Roadmap from '@/components/Career/Roadmap'
 import Contact from '@/components/Contact'
 import Footer from '@/components/Footer'
 
@@ -22,6 +23,7 @@ export default function Home() {
       <Skills />
       <Certifications />
       <Education />
+      <Roadmap />
       <Contact />
       <Footer />
     </div>
