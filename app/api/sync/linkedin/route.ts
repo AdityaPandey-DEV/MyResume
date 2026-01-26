@@ -161,7 +161,8 @@ async function handleManualImport(data: any) {
             const defaults = [
                 { title: "Full Stack Web Development", description: "Creating responsive, intuitive interfaces and robust backend systems.", icon: "desktop" },
                 { title: "AI & Machine Learning", description: "Exploring artificial intelligence and machine learning applications.", icon: "brain" },
-                { title: "Competitive Programming", description: "Sharpening problem-solving skills through algorithmic challenges.", icon: "code" }
+                { title: "Competitive Programming", description: "Sharpening problem-solving skills through algorithmic challenges.", icon: "code" },
+                { title: "Cloud Computing", description: "Building scalable and reliable applications using cloud services.", icon: "cloud" }
             ];
             for (let i = 0; i < defaults.length; i++) {
                 await prisma.focusArea.create({
@@ -274,14 +275,31 @@ async function handleManualImport(data: any) {
     // 4. Update Education
     if (data.education && Array.isArray(data.education)) {
         await prisma.education.deleteMany({});
-        for (const edu of data.education) {
+
+        // Match the 3-tier style from HTML (Blue, Indigo, Purple)
+        const styles = [
+            { bg: "bg-blue-600", light: "text-blue-100", pill: "bg-blue-50", pillText: "text-blue-600", icon: "graduation-cap" },
+            { bg: "bg-indigo-600", light: "text-indigo-100", pill: "bg-indigo-50", pillText: "text-indigo-600", icon: "school" },
+            { bg: "bg-purple-600", light: "text-purple-100", pill: "bg-purple-50", pillText: "text-purple-600", icon: "book" }
+        ];
+
+        for (let i = 0; i < data.education.length; i++) {
+            const edu = data.education[i];
+            const style = styles[i] || styles[0]; // Fallback to first style
+
             await prisma.education.create({
                 data: {
                     institution: edu.institution || 'Unknown',
                     degree: edu.degree || '',
-                    level: '',
+                    level: i === 0 ? "B.Tech" : i === 1 ? "Senior Secondary" : "Secondary",
                     duration: edu.duration || '',
-                    description: '',
+                    description: edu.description || '',
+                    bgColor: style.bg,
+                    lightText: style.light,
+                    pillBg: style.pill,
+                    pillText: style.pillText,
+                    icon: style.icon,
+                    order: i
                 }
             })
         }
