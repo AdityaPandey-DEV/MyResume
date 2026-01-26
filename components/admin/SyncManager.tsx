@@ -216,7 +216,7 @@ export default function SyncManager() {
                                     </li>
                                     <li className="flex items-start gap-3 text-gray-700">
                                         <div className="w-5 h-5 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs flex-shrink-0 mt-0.5">3</div>
-                                        <span>Click the extension icon and hit <b>"Sync to Portfolio"</b>.</span>
+                                        <span>Click the extension icon and hit <b>&quot;Sync to Portfolio&quot;</b>.</span>
                                     </li>
                                 </ul>
                             </div>
