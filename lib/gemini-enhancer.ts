@@ -19,7 +19,7 @@ export async function enhanceContent(text: string, type: 'about' | 'experience' 
     } else if (type === 'experience') {
         prompt = `Rewrite this job description with strong action verbs. Under 40 words. Highlight impact. Text: "${text}"`;
     } else if (type === 'skills') {
-        prompt = `Categorize these skills into JSON: { "Programming": { "icon": "fa-code", "skills": [{"name": "Skill", "level": 85}, ...], "tags": [] }, ... }. Categories: "Programming", "Frontend", "Backend", "Tools & DevOps". Text: "${text}"`;
+        prompt = `Extract skills from this text (which may be HTML). Return a JSON object where keys are categories (Programming, Frontend, Backend, Tools & DevOps, Cloud, AI/ML, Soft Skills) and values have: { "icon": "font-awesome-class", "skills": [{"name": "Skill Name", "level": 85 (estimate if missing)}], "tags": [] }. Ignore unrelated HTML/CSS. Text: "${text.substring(0, 15000)}"`;
     } else if (type === 'holistic-analysis') {
         prompt = `Analyze user data (LinkedIn, GitHub, LeetCode, Codeforces) and return JSON: { "persona": "2-sentence summary", "strengths": [], "gaps": [], "topTechStack": [], "suggestedFocus": "3-month direction" }. Data: "${text}"`;
     } else if (type === 'career-suggestions') {
