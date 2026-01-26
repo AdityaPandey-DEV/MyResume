@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { scrapeLinkedInProfile } from '@/lib/linkedin-scraper';
 import { revalidatePath } from 'next/cache';
+import { getScreenshotUrl } from '@/lib/meta-helper';
+
 
 export async function POST(req: Request) {
     console.log("DEBUG: API /sync/linkedin HIT");
@@ -367,6 +369,16 @@ async function handleManualImport(data: any) {
             // Pick color based on index for variety
             const color = vibrantColors[i % vibrantColors.length];
 
+            // Resolve Image (Priority: Media Image > Screenshot of Link > Logo)
+            let finalImageUrl = cert.imageUrl || null;
+            let finalLogoUrl = cert.logoUrl || null;
+
+            // If we only have the logo, or no image at all, try to get a screenshot of the certificate URL
+            if ((!finalImageUrl || finalImageUrl === finalLogoUrl) && cert.url) {
+                // Use a screenshot service for the actual certificate preview
+                finalImageUrl = getScreenshotUrl(cert.url);
+            }
+
             // Find best matching icon
             let icon = 'fa-certificate';
             for (const [key, value] of Object.entries(iconMap)) {
@@ -376,7 +388,7 @@ async function handleManualImport(data: any) {
                 }
             }
             if (orgLower.includes('google')) icon = 'fa-brands fa-google';
-            if (orgLower.includes('meta')) icon = 'fa-brands fa-facebook-f'; // Meta uses fa-facebook-f or custom
+            if (orgLower.includes('meta')) icon = 'fa-brands fa-facebook-f';
             if (orgLower.includes('ibm')) icon = 'fa-id-card';
 
             await prisma.certification.create({
@@ -386,12 +398,12 @@ async function handleManualImport(data: any) {
                     date: cert.date || '',
                     description: cert.description || '',
                     certificateUrl: cert.url || null,
-                    imageUrl: cert.imageUrl || null,
-                    logoUrl: cert.logoUrl || null,
+                    imageUrl: finalImageUrl,
+                    logoUrl: finalLogoUrl,
                     tags: cert.tags || [],
                     icon: icon,
                     color: color,
-                    isVisible: true, // Show synced certifications by default
+                    isVisible: true,
                     order: i,
                 }
             });

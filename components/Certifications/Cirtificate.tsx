@@ -58,10 +58,22 @@ export default function Certificate({
         onClick={() => imageUrl && setIsModalOpen(true)}
       >
 
+        {/* Background Layer (Image or Gradient) */}
+        <div className="absolute inset-0">
+          {imageUrl ? (
+            <div className="relative h-full w-full">
+              <img src={imageUrl} alt="" className="w-full h-full object-cover" />
+              <div className={`absolute inset-0 bg-gradient-to-r ${gradientClass} opacity-85`}></div>
+            </div>
+          ) : (
+            <div className={`h-full w-full bg-gradient-to-r ${gradientClass}`}></div>
+          )}
+        </div>
+
         {/* Content Layer */}
-        <div className="relative z-10 bg-white h-full flex flex-col">
-          <div className={`bg-gradient-to-r ${gradientClass} p-6 flex items-center justify-between`}>
-            <h3 className="text-xl font-bold text-white line-clamp-2 leading-tight">{title}</h3>
+        <div className="relative z-10 h-full flex flex-col bg-white/5 backdrop-blur-sm">
+          <div className="p-6 flex items-center justify-between border-b border-white/10">
+            <h3 className="text-xl font-bold text-white line-clamp-2 leading-tight drop-shadow-md">{title}</h3>
             <div className="bg-white/20 backdrop-blur-md text-white w-12 h-12 shrink-0 rounded-xl border border-white/30 flex items-center justify-center shadow-inner overflow-hidden">
               {logoUrl ? (
                 <img src={logoUrl} alt={organization} className="w-full h-full object-cover" />
