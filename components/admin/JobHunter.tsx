@@ -264,7 +264,7 @@ export default function JobHunter() {
                                     </div>
                                     <span className="text-[10px] font-black text-indigo-400 bg-indigo-50 px-2 py-0.5 rounded uppercase tracking-widest">{job.location}</span>
                                 </div>
-                                <p className="text-gray-500 text-xs italic mb-5 leading-relaxed">"{job.whySuited}"</p>
+                                <p className="text-gray-500 text-xs italic mb-5 leading-relaxed">&quot;{job.whySuited}&quot;</p>
                                 <div className="flex gap-2 pt-2 border-t border-gray-50">
                                     <button
                                         onClick={() => trackDiscoveredJob(job)}
