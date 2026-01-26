@@ -86,10 +86,10 @@ export default function WhatsAppWidget({ avatarUrl }: WhatsAppWidgetProps) {
                         initial={{ opacity: 0, y: 100, scale: 0.9 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 100, scale: 0.9 }}
-                        className="fixed inset-0 md:inset-auto md:bottom-24 md:right-6 z-50 w-full h-full md:w-[380px] md:h-[600px] bg-[#EFEAE2] md:rounded-[18px] shadow-2xl overflow-hidden flex flex-col font-sans"
+                        className="fixed inset-0 md:inset-auto md:bottom-24 md:right-6 z-50 w-full h-[100dvh] md:h-[600px] md:w-[380px] bg-[#EFEAE2] md:rounded-[18px] shadow-2xl overflow-hidden flex flex-col font-sans"
                     >
                         {/* Header */}
-                        <div className="bg-[#008069] p-3 flex items-center justify-between shadow-sm shrink-0">
+                        <div className="bg-[#008069] p-3 flex items-center justify-between shadow-sm shrink-0 z-10">
                             <div className="flex items-center gap-3">
                                 <button
                                     onClick={() => setIsOpen(false)}
@@ -110,8 +110,16 @@ export default function WhatsAppWidget({ avatarUrl }: WhatsAppWidgetProps) {
                                 </div>
                             </div>
                             <div className="flex gap-4 text-white/80 shrink-0">
-                                <Video size={22} className="cursor-pointer hover:text-white" onClick={() => toast("Aditya is busy coding! Let's chat here instead. 💻", { icon: '👨‍💻' })} />
-                                <Phone size={20} className="cursor-pointer hover:text-white" onClick={() => toast("Can't take calls right now. Text me! 📱", { icon: '📴' })} />
+                                <Video
+                                    size={22}
+                                    className="cursor-pointer hover:text-white"
+                                    onClick={() => setMessages(prev => [...prev, { role: 'assistant', content: "I'm currently coding! Let's chat here instead. 💻" }])}
+                                />
+                                <Phone
+                                    size={20}
+                                    className="cursor-pointer hover:text-white"
+                                    onClick={() => setMessages(prev => [...prev, { role: 'assistant', content: "Can't take calls right now. Text me! 📱" }])}
+                                />
                                 <button onClick={() => setIsOpen(false)} className="hidden md:block hover:text-white">
                                     <X size={22} />
                                 </button>

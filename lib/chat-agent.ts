@@ -1,12 +1,13 @@
-import { Groq } from 'groq-sdk';
+import Groq from 'groq-sdk';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { prisma } from '@/lib/prisma';
 import { chatQueue } from './rate-limiter';
 import { fetchRepoFileTree } from './github-utils';
 
 // Initialize Clients
+// Using global defaults or dummy key to prevent init crash
 const groq = new Groq({
-    apiKey: process.env.GROQ_API_KEY,
+    apiKey: process.env.GROQ_API_KEY || 'dummy_key',
 });
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
@@ -37,9 +38,7 @@ Your goal is to chat with visitors on your portfolio website as if you are Adity
 
 export async function generateChatResponse(message: string, sessionId: string) {
     try {
-        // 1. Fetch Resume Context (Cached or fresh)
-        // For now, we'll fetch dynamic parts. 
-        // Optimization: You could cache this string.
+        // 1. Fetch Resume Context
         const [about, projects, skills, experience, codingProfileData, certifications] = await Promise.all([
             prisma.about.findFirst({ include: { values: true, focusAreas: true, journey: true } }),
             prisma.project.findMany(),
@@ -78,21 +77,15 @@ export async function generateChatResponse(message: string, sessionId: string) {
         });
 
         // 1.1 Dynamic Repo Context Injection
-        // Check if user is asking about a specific project
         const lowerMsg = message.toLowerCase();
         let repoContext = "";
-
-        // Find matched project: Strict Name Match OR Keyword Match (e.g. "PYQ" in "PYQ-GEHU")
         const msgTokens = lowerMsg.split(/[^a-z0-9]+/).filter(t => t.length > 2);
 
         const matchedProject = projects.find((p: any) => {
             if (!p.title || !p.repoUrl) return false;
             const titleLower = p.title.toLowerCase();
             const titleTokens = titleLower.split(/[^a-z0-9]+/).filter((t: string) => t.length > 2);
-
-            // Match if full title is in message OR valid intersection of keywords
-            return lowerMsg.includes(titleLower) ||
-                titleTokens.some((t: string) => msgTokens.includes(t));
+            return lowerMsg.includes(titleLower) || titleTokens.some((t: string) => msgTokens.includes(t));
         });
 
         if (matchedProject && matchedProject.repoUrl) {
@@ -100,7 +93,6 @@ export async function generateChatResponse(message: string, sessionId: string) {
             const filePaths = await fetchRepoFileTree(matchedProject.repoUrl);
 
             if (filePaths && filePaths.length > 0) {
-                // Smart Search: Filter files based on User's Query
                 const relevantFiles = filePaths.filter(path => {
                     const lowerPath = path.toLowerCase();
                     const isRoot = !path.includes('/');
@@ -108,7 +100,6 @@ export async function generateChatResponse(message: string, sessionId: string) {
                     return isRoot || matchesQuery;
                 });
 
-                // ALGORITHMIC BYPASS: Check for specific keyword matches (excluding root files if they don't match)
                 const keywordMatches = relevantFiles.filter(f => msgTokens.some(t => f.toLowerCase().includes(t)));
 
                 if (keywordMatches.length > 0) {
@@ -116,7 +107,6 @@ export async function generateChatResponse(message: string, sessionId: string) {
                     const displayFiles = keywordMatches
                         .slice(0, 10)
                         .map(f => {
-                            // Encode path parts to handle spaces (e.g. "Year 1" -> "Year%201")
                             const encodedPath = f.split('/').map(part => encodeURIComponent(part)).join('/');
                             return `- [${f.split('/').pop()}](${matchedProject.repoUrl}/blob/main/${encodedPath})`;
                         })
@@ -126,11 +116,8 @@ export async function generateChatResponse(message: string, sessionId: string) {
                     return `I found ${matchCount} relevant files in **${matchedProject.title}** matching your query:\n\n${displayFiles}${moreText}\n\nYou can view them directly on GitHub! 🚀\n(This search was performed algorithmically to save time.)`;
                 }
 
-                // If we have a project match but no file matches, return early too (Don't waste AI tokens on "I couldn't find it")
                 repoContext = `\n\n# NOTE: Checked project "${matchedProject.title}" but found no files matching keywords: ${msgTokens.join(', ')}.`;
 
-                // STRICT MODE: If user asked for specific keywords and we found the project but no files, 
-                // we should probably just say that instead of hallucinating.
                 if (msgTokens.length > 0) {
                     return `I checked the **${matchedProject.title}** repository, but I couldn't find any files matching "${msgTokens.join(', ')}". \n\nYou might want to browse the [repo directly](${matchedProject.repoUrl}).`;
                 }
@@ -142,25 +129,23 @@ export async function generateChatResponse(message: string, sessionId: string) {
 
         const prompt = SYSTEM_PROMPT.replace('{CONTEXT}', context + repoContext);
 
-        // 2. Fetch recent chat history (last 10 msgs) for context
+        // 2. Fetch recent chat history
         const history = await prisma.chatMessage.findMany({
             where: { sessionId },
             orderBy: { createdAt: 'desc' },
             take: 10,
         });
 
-        // Reverse to chronological order
         const chatHistory = history.reverse().map(msg => ({
             role: msg.role === 'user' ? 'user' : 'assistant',
             content: msg.content,
         }));
 
-        // 3. Try Groq (Llama 3.3 70B)
         // 3. Execute LLM with Queue and Retry
         const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 
         return await chatQueue.add(async () => {
-            // Try Groq
+            // Try Groq First
             try {
                 const completion = await groq.chat.completions.create({
                     messages: [
@@ -175,7 +160,7 @@ export async function generateChatResponse(message: string, sessionId: string) {
 
                 return completion.choices[0]?.message?.content || "Hey! I'm a bit busy coding right now, could you ask that again?";
             } catch (groqError: any) {
-                console.warn("Groq failed or Rate Limited, falling back to Gemini.");
+                console.warn("Groq failed:", groqError.message);
 
                 // Fallback to Gemini with Retry
                 const maxRetries = 2;
@@ -184,51 +169,24 @@ export async function generateChatResponse(message: string, sessionId: string) {
                 while (retryCount <= maxRetries) {
                     try {
                         const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
-
-                        const geminiHistory = [
-                            { role: "user", parts: [{ text: prompt }] },
-                            { role: "model", parts: [{ text: "Understood. I am Aditya Pandey. ready to chat." }] }
-                        ];
-
-                        let lastRole = 'model';
-                        chatHistory.forEach(h => {
-                            const currentRole = h.role === 'user' ? 'user' : 'model';
-                            if (currentRole !== lastRole) {
-                                geminiHistory.push({
-                                    role: currentRole,
-                                    parts: [{ text: h.content }]
-                                });
-                                lastRole = currentRole;
-                            }
-                        });
-
-                        const chat = model.startChat({
-                            history: geminiHistory,
-                        });
-
-                        const result = await chat.sendMessage(message);
+                        const result = await model.generateContent(prompt + `\n\nUser Message: ${message}`);
                         return result.response.text();
-
                     } catch (geminiError: any) {
-                        console.error(`Gemini Attempt ${retryCount + 1} failed:`, geminiError.message);
+                        console.warn(`Gemini Attempt ${retryCount + 1} failed: ${geminiError.message}`);
 
                         const isRateLimit = geminiError.message?.includes('429') || geminiError.message?.includes('Quota exceeded');
 
-                        if (isRateLimit && retryCount < maxRetries) {
-                            console.log("Gemini Rate Limit hit. Waiting 25s before retry...");
-                            await delay(25000);
-                            retryCount++;
-                            continue;
-                        }
-
                         if (isRateLimit) {
-                            return "I'm receiving too many messages right now! 🚦 Please give me 30 seconds to catch up.";
+                            console.log("Gemini Rate Limit hit. Waiting before retry...");
+                            await delay(2000 * Math.pow(2, retryCount)); // Exponential backoff: 2s, 4s, 8s
+                            retryCount++;
+                        } else {
+                            break; // Non-transient error, stop retrying
                         }
-
-                        throw geminiError;
                     }
                 }
-                return "System Error: Both AI models are currently unavailable due to high traffic.";
+
+                return "So tired today, let's chat tomorrow! 😴";
             }
         });
 
