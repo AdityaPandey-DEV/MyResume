@@ -54,14 +54,35 @@ export async function fetchRepoFileTree(repoUrl: string): Promise<string[]> {
         }
 
         // Get default branch SHA
-        const repoInfo = await fetch(`https://api.github.com/repos/${owner}/${repo}`, { headers }).then(res => res.json());
-        const defaultBranch = repoInfo.default_branch || 'main';
+        let defaultBranch = 'main';
+        try {
+            const repoRes = await fetch(`https://api.github.com/repos/${owner}/${repo}`, { headers });
+            if (repoRes.ok) {
+                const repoInfo = await repoRes.json();
+                defaultBranch = repoInfo.default_branch || 'main';
+            } else {
+                console.warn(`Failed to fetch repo info for ${repo}: ${repoRes.status} ${repoRes.statusText}`);
+                // If rate limited, we can't guess branch, but 'main' or 'master' are good bets.
+            }
+        } catch (e) {
+            console.warn("Repo Info fetch error:", e);
+        }
 
-        // Get Tree Recursively
-        const treeUrl = `https://api.github.com/repos/${owner}/${repo}/git/trees/${defaultBranch}?recursive=1`;
-        const response = await fetch(treeUrl, { headers });
+        // Get Tree Recursively - Attempt 1 (Detected/Default Branch)
+        let treeUrl = `https://api.github.com/repos/${owner}/${repo}/git/trees/${defaultBranch}?recursive=1`;
+        let response = await fetch(treeUrl, { headers });
 
-        if (!response.ok) return [];
+        // Fallback: If 'main' failed (404), try 'master'
+        if (!response.ok && defaultBranch === 'main') {
+            console.log("Main branch failed, trying master...");
+            treeUrl = `https://api.github.com/repos/${owner}/${repo}/git/trees/master?recursive=1`;
+            response = await fetch(treeUrl, { headers });
+        }
+
+        if (!response.ok) {
+            console.error(`Tree fetch failed for ${repo}: ${response.status}`);
+            return [];
+        }
 
         const data = await response.json();
         if (!data.tree) return [];

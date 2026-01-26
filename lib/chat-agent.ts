@@ -115,7 +115,11 @@ export async function generateChatResponse(message: string, sessionId: string) {
                     const matchCount = keywordMatches.length;
                     const displayFiles = keywordMatches
                         .slice(0, 10)
-                        .map(f => `- [${f.split('/').pop()}](${matchedProject.repoUrl}/blob/main/${f})`)
+                        .map(f => {
+                            // Encode path parts to handle spaces (e.g. "Year 1" -> "Year%201")
+                            const encodedPath = f.split('/').map(part => encodeURIComponent(part)).join('/');
+                            return `- [${f.split('/').pop()}](${matchedProject.repoUrl}/blob/main/${encodedPath})`;
+                        })
                         .join('\n');
 
                     const moreText = matchCount > 10 ? `\n...and ${matchCount - 10} more.` : '';

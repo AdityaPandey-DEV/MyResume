@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Send, X, MessageCircle, Mic, Paperclip, MoreVertical, Phone, Video } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface Message {
     role: 'user' | 'assistant';
@@ -27,6 +29,7 @@ export default function WhatsAppWidget({ avatarUrl }: WhatsAppWidgetProps) {
 
     // Load session from localStorage
     useEffect(() => {
+        console.log("WhatsAppWidget Loaded - Markdown Support Active");
         const savedSession = localStorage.getItem('chat_session_id');
         if (savedSession) setSessionId(savedSession);
     }, []);
@@ -137,7 +140,19 @@ export default function WhatsAppWidget({ avatarUrl }: WhatsAppWidgetProps) {
                       ${msg.role === 'user' ? 'bg-[#D9FDD3] rounded-tr-none' : 'bg-white rounded-tl-none'}
                     `}
                                     >
-                                        <p className="whitespace-pre-wrap text-gray-800 leading-relaxed">{msg.content}</p>
+                                        <div className="text-gray-800 leading-relaxed markdown-content">
+                                            <ReactMarkdown
+                                                remarkPlugins={[remarkGfm]}
+                                                components={{
+                                                    a: ({ node, ...props }) => <a {...props} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline break-all" />,
+                                                    ul: ({ node, ...props }) => <ul {...props} className="list-disc ml-4 my-1" />,
+                                                    ol: ({ node, ...props }) => <ol {...props} className="list-decimal ml-4 my-1" />,
+                                                    li: ({ node, ...props }) => <li {...props} className="my-0.5" />,
+                                                }}
+                                            >
+                                                {msg.content}
+                                            </ReactMarkdown>
+                                        </div>
                                         <span className="text-[10px] text-gray-500 float-right mt-1 ml-2 flex items-center gap-1">
                                             {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                             {msg.role === 'user' && <span className="text-blue-500">✓✓</span>}
