@@ -1,7 +1,9 @@
 'use client'
 
-import Image from 'next/image'
+import { ArrowDown, Github, Linkedin, Mail } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
+import WhatsAppWidget from '../WhatsAppWidget'
 
 type HeroProps = {
   hero: {
@@ -128,7 +130,7 @@ export default function HeroClient({ hero }: HeroProps) {
           </div>
         </div>
       </div>
+      <WhatsAppWidget /> {/* Rendered WhatsAppWidget */}
     </div>
   )
 }
-

@@ -405,3 +405,27 @@ model RoadmapItem {
 
   @@index([order])
 }
+
+// WhatsApp-Style Chatbot
+model ChatSession {
+  id            String        @id @default(cuid())
+  visitorId     String?       @map("visitor_id") // Cookie-based or IP-hash
+  userName      String?       // "Guest" or explicit name
+  userEmail     String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  messages      ChatMessage[]
+  adminNotes    String?       @db.Text
+  isArchived    Boolean       @default(false)
+}
+
+model ChatMessage {
+  id            String      @id @default(cuid())
+  sessionId     String
+  chatSession   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  role          String      // "user", "assistant", "system"
+  content       String      @db.Text
+  createdAt     DateTime    @default(now())
+  
+  @@index([sessionId])
+}
