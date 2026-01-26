@@ -4,9 +4,9 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
-        const sessionId = params.id;
+        const { id: sessionId } = await params;
 
         const messages = await prisma.chatMessage.findMany({
             where: { sessionId },
