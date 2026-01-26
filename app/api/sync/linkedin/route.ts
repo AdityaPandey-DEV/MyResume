@@ -285,25 +285,75 @@ async function handleManualImport(data: any) {
         await prisma.advancedSkill.deleteMany({});
         await prisma.softSkill.deleteMany({});
 
-        // In a real scenario, we'd use Gemini to categorize these too.
-        // For now, let's provide smart defaults based on common dev profiles
-        const aiRelated = data.skills.filter((s: string) => /ai|ml|learning|data|gpt|vision/i.test(s));
-        const cloudRelated = data.skills.filter((s: string) => /cloud|aws|azure|gcp|docker|kubernetes|vercel/i.test(s));
-        const softRelated = ["Problem Solving", "Team Leadership", "Communication", "Adaptability"];
+        // 3. Update Skills using Advanced Categorization
+        if (data.skills && Array.isArray(data.skills)) {
+            console.log("DEBUG: Categorizing", data.skills.length, "skills...");
+            await prisma.skillCategory.deleteMany({});
+            await prisma.advancedSkill.deleteMany({});
+            await prisma.softSkill.deleteMany({});
 
-        for (const skill of aiRelated.slice(0, 4)) {
-            await prisma.advancedSkill.create({ data: { category: 'ai', skill } });
-        }
-        for (const skill of cloudRelated.slice(0, 4)) {
-            await prisma.advancedSkill.create({ data: { category: 'cloud', skill } });
-        }
-        for (const skill of softRelated) {
-            await prisma.softSkill.create({
-                data: {
-                    title: skill,
-                    description: `Demonstrated expertise in ${skill.toLowerCase()} through various projects and collaborations.`
+            try {
+                const categorizedData = await enhanceContent(data.skills.join(', '), 'skills');
+                const parsedSkills = JSON.parse(categorizedData);
+
+                let order = 0;
+                for (const [title, details] of Object.entries(parsedSkills) as [string, any][]) {
+                    const category = await prisma.skillCategory.create({
+                        data: {
+                            title,
+                            icon: details.icon || 'fa-code',
+                            tags: details.tags || [],
+                            order: order++
+                        }
+                    });
+
+                    const skillItems = details.skills || [];
+                    for (let j = 0; j < skillItems.length; j++) {
+                        const s = skillItems[j];
+                        await prisma.skill.create({
+                            data: {
+                                categoryId: category.id,
+                                name: s.name,
+                                level: s.level || 85,
+                                order: j
+                            }
+                        });
+                    }
                 }
-            });
+            } catch (e) {
+                console.error("DEBUG: Skills categorization failed, using fallback.", e);
+                // Fallback: Group basic
+                const groups = {
+                    "Programming": data.skills.filter((s: string) => /python|java|c\+\+|javascript|typescript|php|go|rust/i.test(s)),
+                    "Frontend": data.skills.filter((s: string) => /react|vue|angular|html|css|tailwind|bootstrap/i.test(s)),
+                    "Backend": data.skills.filter((s: string) => /node|express|django|flask|spring|sql|mongo|firebase/i.test(s)),
+                    "Tools": data.skills.filter((s: string) => /git|docker|aws|azure|gcp|linux|vscode/i.test(s))
+                };
+
+                let order = 0;
+                for (const [title, skills] of Object.entries(groups)) {
+                    if (skills.length === 0) continue;
+                    const cat = await prisma.skillCategory.create({
+                        data: { title, icon: 'fa-code', order: order++ }
+                    });
+                    for (let j = 0; j < skills.length; j++) {
+                        await prisma.skill.create({
+                            data: { categoryId: cat.id, name: skills[j], level: 85, order: j }
+                        });
+                    }
+                }
+            }
+
+            // Always add some soft skills for completeness
+            const softRelated = ["Problem Solving", "Team Leadership", "Communication", "Adaptability"];
+            for (const skill of softRelated) {
+                await prisma.softSkill.create({
+                    data: {
+                        title: skill,
+                        description: `Demonstrated expertise in ${skill.toLowerCase()} through various projects and collaborations.`
+                    }
+                });
+            }
         }
     }
     // 4. Update Education

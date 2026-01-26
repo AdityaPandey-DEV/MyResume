@@ -52,9 +52,17 @@ export async function enhanceContent(text: string, type: 'about' | 'experience' 
                 Categorize the following technical skills into these 4 EXACT categories: 
                 "Programming", "Frontend", "Backend", "Tools & DevOps".
                 
-                - Return strictly a JSON object: {"Programming": ["Skill1", ...], "Frontend": [...], "Backend": [...], "Tools & DevOps": [...]}
-                - Top 5-6 most relevant skills per category.
-                - Keep skill names short.
+                - Return strictly a JSON object: 
+                {
+                  "Programming": { "icon": "fa-code", "skills": [{"name": "Skill", "level": 85}, ...], "tags": ["Tag1", ...] },
+                  "Frontend": { "icon": "fa-layer-group", "skills": [...], "tags": [...] },
+                  "Backend": { "icon": "fa-server", "skills": [...], "tags": [...] },
+                  "Tools & DevOps": { "icon": "fa-screwdriver-wrench", "skills": [...], "tags": [...] }
+                }
+                - Pick top 4-5 core skills for the "skills" list (assign realistic levels 70-95).
+                - Put all other relevant skills for that category in the "tags" list as simple strings.
+                - Use professional FontAwesome 6 solid icon names.
+                - Return ONLY the JSON object.
                 
                 Original List: "${text}"
                 `;
