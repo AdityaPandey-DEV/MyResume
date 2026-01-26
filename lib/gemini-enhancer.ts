@@ -24,8 +24,7 @@ export async function enhanceContent(text: string, type: 'about' | 'experience' 
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
         try {
             const genAI = new GoogleGenerativeAI(apiKey as string);
-            // gemini-2.5-flash passed the quota check
-            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
             let prompt = "";
 

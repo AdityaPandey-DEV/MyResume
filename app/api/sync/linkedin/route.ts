@@ -92,6 +92,11 @@ async function handleManualImport(data: any) {
             enhancedAboutSub = data.about || '';
         }
 
+        // Hard limit on Hero Description (Strict limit for UI stability)
+        if (enhancedHeroDesc && enhancedHeroDesc.split(' ').length > 25) {
+            enhancedHeroDesc = enhancedHeroDesc.split(' ').slice(0, 25).join(' ') + '...';
+        }
+
         const hero = await prisma.hero.findFirst({});
 
         if (hero) {
