@@ -6,7 +6,7 @@ import { prisma } from "./prisma";
 let groq: Groq | null = null;
 let genAI: any = null;
 
-export async function enhanceContent(text: string, type: 'about' | 'experience' | 'skills' | 'projects' | 'hero-title' | 'hero-description' | 'project-icon' | 'holistic-analysis' | 'career-suggestions' | 'job-outreach'): Promise<string> {
+export async function enhanceContent(text: string, type: 'about' | 'experience' | 'skills' | 'projects' | 'hero-title' | 'hero-description' | 'project-icon' | 'holistic-analysis' | 'career-suggestions' | 'job-outreach' | 'job-discovery'): Promise<string> {
 
     // Initialize providers on first call
     if (!groq && process.env.GROQ_API_KEY) groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
@@ -32,12 +32,14 @@ export async function enhanceContent(text: string, type: 'about' | 'experience' 
         prompt = `Generate a catchy 1-sentence bio (<25 words). String only. Text: "${text}"`;
     } else if (type === 'project-icon') {
         prompt = `Return ONLY a FontAwesome 6 solid icon name for this project: "${text}"`;
+    } else if (type === 'job-discovery') {
+        prompt = text; // The caller provides the full prompt
     }
 
     // 2. Try Groq (Llama 3.1 70B) - Much faster and higher free limits
     if (groq) {
         try {
-            const isJsonType = (type === 'skills' || type === 'holistic-analysis' || type === 'career-suggestions' || type === 'job-outreach');
+            const isJsonType = (type === 'skills' || type === 'holistic-analysis' || type === 'career-suggestions' || type === 'job-outreach' || type === 'job-discovery');
             const chatCompletion = await groq.chat.completions.create({
                 messages: [{ role: "user", content: prompt + (isJsonType ? "\nReturn ONLY the requested format (raw text or JSON block), no conversational filler." : "") }],
                 model: "llama-3.3-70b-versatile",
@@ -64,7 +66,7 @@ export async function enhanceContent(text: string, type: 'about' | 'experience' 
             let enhanced = (await result.response).text().trim();
 
             // Extract JSON if needed
-            if (type === 'skills' || type === 'holistic-analysis' || type === 'career-suggestions' || type === 'job-outreach') {
+            if (type === 'skills' || type === 'holistic-analysis' || type === 'career-suggestions' || type === 'job-outreach' || type === 'job-discovery') {
                 const jsonMatch = enhanced.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
                 if (jsonMatch) enhanced = jsonMatch[0];
             }

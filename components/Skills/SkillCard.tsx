@@ -12,6 +12,13 @@ export default function SkillCard({
   skills: Array<{ name: string; level: number }>
   tags: string[]
 }) {
+  const activeSkills = skills.filter((s) => s.level > 0)
+  const zeroLevelSkills = skills
+    .filter((s) => s.level === 0)
+    .map((s) => s.name)
+
+  const allTags = [...(tags || []), ...zeroLevelSkills]
+
   return (
     <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition">
       <div className="flex items-center mb-5">
@@ -22,10 +29,10 @@ export default function SkillCard({
       </div>
 
       <div className="space-y-3">
-        {skills.map((skill, i) => (
+        {activeSkills.map((skill, i) => (
           <SkillBar key={i} name={skill.name} level={skill.level} />
         ))}
-        <SkillTags tags={tags} />
+        {allTags.length > 0 && <SkillTags tags={allTags} />}
       </div>
     </div>
   )

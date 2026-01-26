@@ -126,12 +126,14 @@ export default function JobHunter() {
             const res = await fetch('/api/career/jobs/discover', { method: 'POST' })
             const data = await res.json()
             if (data.success) {
-                setDiscoveredJobs(data.discoveredJobs)
+                setDiscoveredJobs(Array.isArray(data.discoveredJobs) ? data.discoveredJobs : [])
                 if (data.isDemo) {
                     toast.error('Daily AI limit reached. Showing high-quality demo matches for your stack! 💎', { duration: 5000 });
                 } else {
                     toast.success('AI discovered new opportunities! 💎')
                 }
+            } else {
+                toast.error(data.error || 'Failed to discover jobs')
             }
         } catch (e) {
             toast.error('Discovery failed')
@@ -255,7 +257,7 @@ export default function JobHunter() {
                     {isDiscovering && <div className="py-12 text-center text-indigo-400 animate-pulse font-bold">AI is scanning the market for your perfect match...</div>}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {discoveredJobs.map((job, idx) => (
+                        {Array.isArray(discoveredJobs) && discoveredJobs.map((job, idx) => (
                             <div key={idx} className="bg-white p-6 rounded-2xl border border-indigo-50 shadow-sm hover:shadow-md transition-all group">
                                 <div className="flex justify-between items-start mb-4">
                                     <div>

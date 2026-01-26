@@ -17,37 +17,60 @@ export async function POST(req: Request) {
       userTitle: hero?.title
     };
 
-    // 2. Generate Suited Jobs
-    // We use a custom 'job-discovery' type (need to handle in enhancer or use suggestions)
-    // I'll reuse 'career-suggestions' or a custom prompt for now
-    const prompt = `Based on this Persona: ${JSON.stringify(context)}, 
-        Discover 6 highly suitable job roles at specific companies that match this developer's level and stack.
-        Target companies should range from high-growth startups to tech giants.
-        
-        Return strictly a JSON array of objects:
-        [
-          {
-            "company": "Company Name",
-            "role": "Specific Job Title",
-            "location": "Preferred City or Remote",
-            "jobUrl": "Search query URL for this job",
-            "whySuited": "Brief reason why it matches their strengths (10 words)"
-          }
-        ]
-        `;
+    // 2. Generate "Smart Search" Links (Deterministic & Reliable)
+    // Instead of hallucinating specific broken links, we generate live search queries.
 
-    const discoveryRaw = await enhanceContent(prompt, 'career-suggestions');
+    const role = hero?.title || analysis.holisticPersona.split(' ')[0] || "Software Engineer";
+    const mainSkill = analysis.topTechStack[0] || "React";
+    const query = encodeURIComponent(`${role} ${mainSkill}`);
+    const location = "India"; // Defaulting to India as implied by "Unstop/Internshala" request, or could be global.
 
-    if (discoveryRaw === "API_QUOTA_EXCEEDED") {
-      const demoJobs = [
-        { company: "Vercel", role: "Software Engineer - Frontend", location: "Remote", jobUrl: "https://vercel.com/careers", whySuited: "Matches your React and Next.js expertise." },
-        { company: "Google", role: "Full Stack Engineer", location: "Bangalore", jobUrl: "https://www.google.com/about/careers", whySuited: "Strong competitive programming rank (LeetCode/Codeforces)." },
-        { company: "Razorpay", role: "Backend Developer (Node.js)", location: "Mumbai", jobUrl: "https://razorpay.com/jobs", whySuited: "Extensive experience with Prisma and PostgreSQL." }
-      ];
-      return NextResponse.json({ success: true, discoveredJobs: demoJobs, isDemo: true });
-    }
+    const discoveredJobs = [
+      {
+        company: "Unstop",
+        role: `Latest ${role} Openings`,
+        location: "India / Remote",
+        jobUrl: `https://unstop.com/jobs?keywords=${query}`,
+        whySuited: `Live search for ${role} roles on Unstop.`
+      },
+      {
+        company: "Internshala",
+        role: `${role} Internships`,
+        location: "Remote / India",
+        jobUrl: `https://internshala.com/internships/keywords-${encodeURIComponent(role)}`,
+        whySuited: "Direct link to tailored internships matching your profile."
+      },
+      {
+        company: "LinkedIn",
+        role: "Targeted Network Search",
+        location: "Global",
+        jobUrl: `https://www.linkedin.com/jobs/search/?keywords=${query}`,
+        whySuited: "Broad search across your professional network."
+      },
+      {
+        company: "Google Careers",
+        role: "Engineering Roles",
+        location: "Bangalore / Hyderabad",
+        jobUrl: `https://www.google.com/about/careers/applications/jobs/results?q=${encodeURIComponent(mainSkill)}`,
+        whySuited: `Opportunities at Google matching your ${mainSkill} expertise.`
+      },
+      {
+        company: "Microsoft Careers",
+        role: "Tech Opportunities",
+        location: "India",
+        jobUrl: `https://careers.microsoft.com/us/en/search-results?keywords=${encodeURIComponent(mainSkill)}`,
+        whySuited: "Explore Microsoft roles that fit your stack."
+      },
+      {
+        company: "Naukri",
+        role: "Priority Applicants",
+        location: "India",
+        jobUrl: `https://www.naukri.com/mnj/keywords-${query}`,
+        whySuited: "High-volume job listings for your exact title."
+      }
+    ];
 
-    const discoveredJobs = JSON.parse(discoveryRaw);
+    console.log("Generated Smart Search Links:", discoveredJobs);
 
     return NextResponse.json({ success: true, discoveredJobs });
 
