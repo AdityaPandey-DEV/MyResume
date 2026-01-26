@@ -100,7 +100,18 @@ async function handleSync(tabId) {
 
         // 5. Post Data
         console.log("Posting to API...", userProfileData);
-        const apiRes = await fetch('http://localhost:3000/api/sync/linkedin', {
+
+        let endpoint = 'https://adityapandeydev.vercel.app/api/sync/linkedin';
+
+        // Try local first for development convenience, then fallback to production
+        try {
+            const localCheck = await fetch('http://localhost:3000/api/sync/linkedin', { method: 'OPTIONS' });
+            if (localCheck.ok) endpoint = 'http://localhost:3000/api/sync/linkedin';
+        } catch (e) {
+            console.log("Local server not reachable, sticking with production.");
+        }
+
+        const apiRes = await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
