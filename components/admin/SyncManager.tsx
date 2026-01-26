@@ -195,37 +195,65 @@ export default function SyncManager() {
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-lg border">
-                    <h2 className="text-xl font-semibold mb-4">LinkedIn Extension</h2>
-                    <p className="text-xs text-gray-500 mb-4">
-                        Tired of copying cookies? Install our local Chrome Extension to sync in one click.
-                    </p>
-                    <div className="space-y-4 text-sm">
-                        <ol className="list-decimal pl-5 space-y-1">
-                            <li>Open Chrome Extensions (chrome://extensions)</li>
-                            <li>Enable &quot;Developer Mode&quot; (top right)</li>
-                            <li>Click &quot;Load Unpacked&quot;</li>
-                            <li>Select the <code className="bg-gray-100 p-1">public/extension</code> folder</li>
-                            <li>Click the &quot;L&quot; icon in your toolbar to Sync!</li>
-                        </ol>
-                    </div>
-                </div>
+                <div className="md:col-span-2 bg-gradient-to-br from-blue-50 to-white p-8 rounded-xl border border-blue-100 shadow-sm">
+                    <div className="flex flex-col md:flex-row gap-8 items-center">
+                        <div className="flex-1">
+                            <h2 className="text-2xl font-bold text-blue-900 mb-2">LinkedIn Synchronization</h2>
+                            <p className="text-gray-600 mb-6">
+                                The easiest way to keep your portfolio up-to-date. Sync your experience, education, and skills in seconds using our official Chrome extension.
+                            </p>
 
-                <div className="bg-white p-6 rounded-lg border">
-                    <h2 className="text-xl font-semibold mb-4">LinkedIn Import</h2>
-                    <p className="text-xs text-gray-500 mb-2">
-                        Paste JSON data from LinkedIn export or compatible scraper.
-                        (Education & Certifications will be overwritten)
-                    </p>
-                    <textarea
-                        className="w-full h-32 p-2 border rounded mb-2 text-xs font-mono"
-                        placeholder='{ "education": [...], "certifications": [...] }'
-                        value={linkedinJson}
-                        onChange={(e) => setLinkedinJson(e.target.value)}
-                    />
-                    <button onClick={handleLinkedinSync} disabled={loading} className="w-full px-4 py-2 bg-[#0077b5] text-white rounded hover:opacity-90 disabled:opacity-50">
-                        Import from LinkedIn JSON
-                    </button>
+                            <div className="space-y-4 mb-8">
+                                <h3 className="text-sm font-semibold text-blue-800 uppercase tracking-wider">How to use:</h3>
+                                <ul className="space-y-3">
+                                    <li className="flex items-start gap-3 text-gray-700">
+                                        <div className="w-5 h-5 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs flex-shrink-0 mt-0.5">1</div>
+                                        <span>Install the <b>LinkedIn Sync</b> extension from the Web Store.</span>
+                                    </li>
+                                    <li className="flex items-start gap-3 text-gray-700">
+                                        <div className="w-5 h-5 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs flex-shrink-0 mt-0.5">2</div>
+                                        <span>Navigate to your LinkedIn profile page.</span>
+                                    </li>
+                                    <li className="flex items-start gap-3 text-gray-700">
+                                        <div className="w-5 h-5 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs flex-shrink-0 mt-0.5">3</div>
+                                        <span>Click the extension icon and hit <b>"Sync to Portfolio"</b>.</span>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <a
+                                href="https://chromewebstore.google.com/detail/your-extension-id"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 px-8 py-4 bg-[#0077b5] text-white font-bold rounded-xl hover:bg-[#006396] transition-all shadow-lg hover:shadow-xl active:scale-95"
+                            >
+                                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm4.24 16L12 15.45 7.77 18l1.12-4.81L5.12 9.91l4.91-.42L12 5l1.97 4.49 4.91.42-3.77 3.28 1.12 4.81z" />
+                                </svg>
+                                Install from Chrome Web Store
+                            </a>
+                        </div>
+
+                        <div className="w-full md:w-72 p-6 bg-white rounded-xl border border-blue-100 shadow-inner">
+                            <h3 className="text-sm font-bold text-gray-400 mb-4 uppercase">Advanced Import</h3>
+                            <p className="text-xs text-gray-500 mb-4">
+                                Use this as a fallback if you prefer manual JSON data entry.
+                            </p>
+                            <textarea
+                                className="w-full h-24 p-2 border rounded mb-3 text-[10px] font-mono bg-gray-50 focus:bg-white transition-colors"
+                                placeholder='{ "linkedinData": { ... } }'
+                                value={linkedinJson}
+                                onChange={(e) => setLinkedinJson(e.target.value)}
+                            />
+                            <button
+                                onClick={handleLinkedinSync}
+                                disabled={loading || !linkedinJson}
+                                className="w-full px-4 py-2 text-sm border-2 border-[#0077b5] text-[#0077b5] font-bold rounded-lg hover:bg-[#0077b5] hover:text-white transition-all disabled:opacity-30"
+                            >
+                                Import JSON
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
