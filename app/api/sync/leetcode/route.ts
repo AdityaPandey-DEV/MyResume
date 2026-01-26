@@ -1,6 +1,6 @@
-
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { revalidatePath } from 'next/cache';
 
 export async function POST(req: Request) {
   try {
@@ -48,7 +48,7 @@ export async function POST(req: Request) {
     const data = await response.json();
 
     if (data.errors) {
-       return NextResponse.json({ error: data.errors[0].message }, { status: 500 });
+      return NextResponse.json({ error: data.errors[0].message }, { status: 500 });
     }
 
     const stats = data.data.matchedUser.submitStats.acSubmissionNum;
@@ -85,6 +85,7 @@ export async function POST(req: Request) {
       },
     });
 
+    revalidatePath('/');
     return NextResponse.json({ success: true, data: updatedProfile });
 
   } catch (error) {

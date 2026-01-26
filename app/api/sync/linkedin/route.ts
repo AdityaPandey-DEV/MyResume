@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { scrapeLinkedInProfile } from '@/lib/linkedin-scraper';
+import { revalidatePath } from 'next/cache';
 
 export async function POST(req: Request) {
     console.log("DEBUG: API /sync/linkedin HIT");
@@ -325,6 +326,7 @@ async function handleManualImport(data: any) {
         }
     }
 
+    revalidatePath('/');
     return NextResponse.json(
         { success: true, message: "Sync & AI Enhancement Complete" },
         {

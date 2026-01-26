@@ -1,7 +1,7 @@
-
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { bulkSyncGithubProjects } from '@/lib/github-bulk-sync';
+import { revalidatePath } from 'next/cache';
 
 export async function POST(req: Request) {
     try {
@@ -16,6 +16,7 @@ export async function POST(req: Request) {
 
         const results = await bulkSyncGithubProjects(setting.value);
 
+        revalidatePath('/');
         return NextResponse.json({ success: true, results });
 
     } catch (error: any) {

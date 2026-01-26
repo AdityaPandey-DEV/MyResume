@@ -1,7 +1,7 @@
-
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
+import { revalidatePath } from 'next/cache';
 // You might need to import authOptions depending on how next-auth is set up in this project.
 // Usually it's in @/lib/auth or @/app/api/auth/[...nextauth]/route
 // For now, I'll assume simple session check or rely on middleware. 
@@ -70,6 +70,7 @@ export async function POST(req: Request) {
         if (linkedinUsername) await upsertSetting('LINKEDIN_USERNAME', linkedinUsername);
         if (linkedinCookie) await upsertSetting('LINKEDIN_COOKIE', linkedinCookie);
 
+        revalidatePath('/');
         return new NextResponse(JSON.stringify({ success: true }), {
             headers: {
                 'Access-Control-Allow-Origin': '*',
