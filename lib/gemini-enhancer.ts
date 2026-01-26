@@ -1,8 +1,20 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { prisma } from "./prisma";
 
 export async function enhanceContent(text: string, type: 'about' | 'experience' | 'skills' | 'projects' | 'hero-title' | 'hero-description' | 'project-icon'): Promise<string> {
-    if (!process.env.GEMINI_API_KEY) {
-        console.warn("GEMINI_API_KEY is missing. Returning original text.");
+    let apiKey = process.env.GEMINI_API_KEY;
+
+    if (!apiKey) {
+        const keySetting = await prisma.adminSettings.findUnique({
+            where: { key: 'GEMINI_API_KEY' },
+        });
+        apiKey = keySetting?.value;
+    }
+
+    if (!apiKey) {
+        console.warn("GEMINI_API_KEY is missing. Returning original text (truncated).");
+        // Safe fallback for hero/experience
+        if (type === 'hero-description') return text.substring(0, 150) + '...';
         return text;
     }
 
@@ -11,7 +23,7 @@ export async function enhanceContent(text: string, type: 'about' | 'experience' 
 
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
         try {
-            const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+            const genAI = new GoogleGenerativeAI(apiKey as string);
             // gemini-2.5-flash passed the quota check
             const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 

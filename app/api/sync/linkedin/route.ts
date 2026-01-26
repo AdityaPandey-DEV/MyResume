@@ -87,7 +87,9 @@ async function handleManualImport(data: any) {
             enhancedHeroDesc = data.about ? await enhanceContent(data.about, 'hero-description') : '';
             enhancedAboutSub = data.about ? await enhanceContent(data.about, 'about') : '';
         } catch (e) {
-            console.log("DEBUG: AI Enhancement failed, using raw data.");
+            console.log("DEBUG: AI Enhancement failed, using truncated raw data.");
+            enhancedHeroDesc = data.about?.substring(0, 160) + '...' || '';
+            enhancedAboutSub = data.about || '';
         }
 
         const hero = await prisma.hero.findFirst({});
@@ -98,7 +100,7 @@ async function handleManualImport(data: any) {
                 where: { id: hero.id },
                 data: {
                     title: enhancedTitle || data.headline || `Software Developer | ${data.location || ''}`,
-                    description: enhancedHeroDesc || data.about?.substring(0, 150) || '',
+                    description: enhancedHeroDesc || '',
                     ...(data.imageUrl && { imageUrl: data.imageUrl })
                 }
             });
@@ -108,7 +110,7 @@ async function handleManualImport(data: any) {
                 data: {
                     name: data.name,
                     title: enhancedTitle || data.headline || `Software Developer | ${data.location || ''}`,
-                    description: enhancedHeroDesc || data.about?.substring(0, 150) || '',
+                    description: enhancedHeroDesc || '',
                     imageUrl: data.imageUrl || '/profile.png',
                 }
             });
