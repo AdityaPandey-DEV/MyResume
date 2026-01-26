@@ -47,9 +47,14 @@ function parseCertItem(item) {
     const issuerEl = item.querySelector('span.t-14.t-normal span[aria-hidden="true"]');
     const dateEl = item.querySelector('span.t-14.t-black--light span[aria-hidden="true"]');
 
-    // Try to find the credential URL
-    const anchor = item.querySelector('a.app-aware-link');
-    const url = anchor ? anchor.href : '';
+    // Try to find the credential URL (The "Show credential" button)
+    const allLinks = Array.from(item.querySelectorAll('a'));
+    const credentialLink = allLinks.find(a =>
+        a.innerText.toLowerCase().includes('show credential') ||
+        a.innerText.toLowerCase().includes('view credential') ||
+        (a.href && !a.href.includes('/company/') && !a.href.includes('/school/') && a.target === '_blank')
+    );
+    const url = credentialLink ? credentialLink.href : '';
 
     // BETTER IMAGE EXTRACTION
     // 1. Look for internal media images (The ACTUAL certificate preview/document)

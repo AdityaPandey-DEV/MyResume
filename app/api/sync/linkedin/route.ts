@@ -406,13 +406,19 @@ async function handleManualImport(data: any) {
             if (orgLower.includes('meta')) icon = 'fa-brands fa-facebook-f';
             if (orgLower.includes('ibm')) icon = 'fa-id-card';
 
+            // Validate Certificate URL (Ensure it's not just a slash or internal link)
+            let finalCertUrl = cert.url || null;
+            if (finalCertUrl && (finalCertUrl === '/' || finalCertUrl.includes('adityapandeydev.vercel.app'))) {
+                finalCertUrl = null;
+            }
+
             await prisma.certification.create({
                 data: {
                     title: cert.title || 'Unknown Certification',
                     organization: cert.organization || 'Unknown Organization',
                     date: cert.date || '',
                     description: cert.description || '',
-                    certificateUrl: cert.url || null,
+                    certificateUrl: finalCertUrl,
                     imageUrl: finalImageUrl,
                     logoUrl: finalLogoUrl,
                     tags: cert.tags || [],
