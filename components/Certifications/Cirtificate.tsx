@@ -37,7 +37,17 @@ export default function Certificate({
     cyan: 'from-cyan-500 to-cyan-700',
   }
 
-  const gradientClass = colorMap[color] || 'from-blue-500 to-blue-700'
+  // Determine the final color to use
+  let finalColor = color
+
+  // If color is missing or is the default 'blue', we pick one based on the title to ensure variety
+  if (!color || color === 'blue' || !colorMap[color]) {
+    const colors = Object.keys(colorMap)
+    const hash = title.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+    finalColor = colors[hash % colors.length]
+  }
+
+  const gradientClass = colorMap[finalColor] || 'from-blue-500 to-blue-700'
 
   return (
     <>
