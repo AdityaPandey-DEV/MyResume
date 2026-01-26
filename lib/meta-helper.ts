@@ -37,8 +37,9 @@ export async function getOgImage(url: string): Promise<string | null> {
 }
 
 export function getScreenshotUrl(url: string): string {
-    // Using Microlink with a 5-second wait for full page rendering (Coursera/Udemy fallback)
-    return `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true&embed=screenshot.url&waitFor=5000`;
+    // Using Microlink with a 10-second "dynamic" wait for heavy JS sites (Coursera/Udemy)
+    // networkidle0 ensures we wait until there's no more network activity for at least 500ms
+    return `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true&embed=screenshot.url&waitFor=10000&waitUntil=networkidle0`;
 }
 
 function resolveUrl(baseUrl: string, relativeUrl: string): string {
