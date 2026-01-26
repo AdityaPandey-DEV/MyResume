@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { prisma } from "./prisma";
 
-export async function enhanceContent(text: string, type: 'about' | 'experience' | 'skills' | 'projects' | 'hero-title' | 'hero-description' | 'project-icon'): Promise<string> {
+export async function enhanceContent(text: string, type: 'about' | 'experience' | 'skills' | 'projects' | 'hero-title' | 'hero-description' | 'project-icon' | 'holistic-analysis' | 'career-suggestions'): Promise<string> {
     let apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
@@ -92,6 +92,40 @@ export async function enhanceContent(text: string, type: 'about' | 'experience' 
                 - Focus on what the project DOES and the IMPACT.
                 
                 Original Description: "${text}"
+                `;
+            } else if (type as any === 'holistic-analysis') {
+                prompt = `
+                Analyze the following user data from multiple platforms (LinkedIn, GitHub, LeetCode, Codeforces).
+                Generate a comprehensive "Holistic Professional Persona".
+                - Return a JSON object with: 
+                {
+                  "persona": "A professional 2-sentence summary of their unique developer identity.",
+                  "strengths": ["Strength 1 (Technical/Competitive)", "Strength 2 (Project/Frontend)", ...],
+                  "gaps": ["Missing Skill 1 (e.g., System Design)", "Gap 2 (e.g., No Cloud Cert)", ...],
+                  "topTechStack": ["React", "Python", ...],
+                  "suggestedFocus": "One clear direction for the next 3 months."
+                }
+                
+                Data Context: "${text}"
+                `;
+            } else if (type as any === 'career-suggestions') {
+                prompt = `
+                Based on the following user persona and gaps, suggest 3-4 actionable "Career Upgrades".
+                Include at least 2 "trending" skills that are highly relevant to their stack but they haven't mastered yet.
+                
+                - Return a JSON array of objects:
+                [
+                  {
+                    "type": "course" | "skill" | "dsa" | "trending",
+                    "title": "Clear Actionable Title or Skill Name",
+                    "description": "Why this is important for THIS user (15 words).",
+                    "difficulty": "Beginner" | "Intermediate" | "Advanced",
+                    "relevanceScore": 0-100,
+                    "actionUrl": "Optional search query"
+                  },
+                  ...
+                ]
+                Persona Context: "${text}"
                 `;
             } else if (type as any === 'project-icon') {
                 prompt = `

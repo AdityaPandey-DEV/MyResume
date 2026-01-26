@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useForm, useFieldArray } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import axios from '@/lib/axios'
@@ -19,6 +19,8 @@ const skillSchema = z.object({
   name: z.string().min(1),
   level: z.number().min(0).max(100).default(0),
   order: z.number().default(0),
+  isActive: z.boolean().default(true),
+  isTrending: z.boolean().default(false),
 })
 
 const advancedSkillSchema = z.object({
@@ -75,7 +77,7 @@ export default function SkillsManager() {
     },
   })
 
-  // Category mutations
+  // Mutations
   const createCategoryMutation = useMutation({
     mutationFn: async (data: CategoryFormData) => {
       const res = await axios.post('/skills/categories', data)
@@ -83,8 +85,7 @@ export default function SkillsManager() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['skill-categories'] })
-      queryClient.invalidateQueries({ queryKey: ['skills'] })
-      toast.success('Category created successfully!')
+      toast.success('Category created!')
       setShowCategoryForm(false)
       resetCategory()
     },
@@ -97,8 +98,7 @@ export default function SkillsManager() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['skill-categories'] })
-      queryClient.invalidateQueries({ queryKey: ['skills'] })
-      toast.success('Category updated successfully!')
+      toast.success('Category updated!')
       setEditingCategoryId(null)
       setShowCategoryForm(false)
       resetCategory()
@@ -111,12 +111,10 @@ export default function SkillsManager() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['skill-categories'] })
-      queryClient.invalidateQueries({ queryKey: ['skills'] })
-      toast.success('Category deleted successfully!')
+      toast.success('Category deleted!')
     },
   })
 
-  // Skill mutations
   const createSkillMutation = useMutation({
     mutationFn: async ({ categoryId, data }: { categoryId: string; data: SkillFormData }) => {
       const res = await axios.post(`/skills/categories/${categoryId}/skills`, data)
@@ -124,24 +122,21 @@ export default function SkillsManager() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['skill-categories'] })
-      queryClient.invalidateQueries({ queryKey: ['skills'] })
-      toast.success('Skill created successfully!')
+      toast.success('Skill created!')
       setShowSkillForm(false)
       resetSkill()
     },
   })
 
   const updateSkillMutation = useMutation({
-    mutationFn: async ({ categoryId, id, data }: { categoryId: string; id: string; data: SkillFormData }) => {
+    mutationFn: async ({ categoryId, id, data }: { categoryId: string; id: string; data: Partial<SkillFormData> }) => {
       const res = await axios.put(`/skills/categories/${categoryId}/skills/${id}`, data)
       return res.data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['skill-categories'] })
-      queryClient.invalidateQueries({ queryKey: ['skills'] })
-      toast.success('Skill updated successfully!')
+      toast.success('Skill updated!')
       setEditingSkillId(null)
-      setEditingCategoryIdForSkill(null)
       setShowSkillForm(false)
       resetSkill()
     },
@@ -153,90 +148,7 @@ export default function SkillsManager() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['skill-categories'] })
-      queryClient.invalidateQueries({ queryKey: ['skills'] })
-      toast.success('Skill deleted successfully!')
-    },
-  })
-
-  // Advanced skill mutations
-  const createAdvancedSkillMutation = useMutation({
-    mutationFn: async (data: AdvancedSkillFormData) => {
-      const res = await axios.post('/skills/advanced', data)
-      return res.data
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['advanced-skills'] })
-      queryClient.invalidateQueries({ queryKey: ['skills'] })
-      toast.success('Advanced skill created successfully!')
-      setShowAdvancedSkillForm(false)
-      resetAdvancedSkill()
-    },
-  })
-
-  const updateAdvancedSkillMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: AdvancedSkillFormData }) => {
-      const res = await axios.put(`/skills/advanced/${id}`, data)
-      return res.data
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['advanced-skills'] })
-      queryClient.invalidateQueries({ queryKey: ['skills'] })
-      toast.success('Advanced skill updated successfully!')
-      setEditingAdvancedSkillId(null)
-      setShowAdvancedSkillForm(false)
-      resetAdvancedSkill()
-    },
-  })
-
-  const deleteAdvancedSkillMutation = useMutation({
-    mutationFn: async (id: string) => {
-      await axios.delete(`/skills/advanced/${id}`)
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['advanced-skills'] })
-      queryClient.invalidateQueries({ queryKey: ['skills'] })
-      toast.success('Advanced skill deleted successfully!')
-    },
-  })
-
-  // Soft skill mutations
-  const createSoftSkillMutation = useMutation({
-    mutationFn: async (data: SoftSkillFormData) => {
-      const res = await axios.post('/skills/soft', data)
-      return res.data
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['soft-skills'] })
-      queryClient.invalidateQueries({ queryKey: ['skills'] })
-      toast.success('Soft skill created successfully!')
-      setShowSoftSkillForm(false)
-      resetSoftSkill()
-    },
-  })
-
-  const updateSoftSkillMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: SoftSkillFormData }) => {
-      const res = await axios.put(`/skills/soft/${id}`, data)
-      return res.data
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['soft-skills'] })
-      queryClient.invalidateQueries({ queryKey: ['skills'] })
-      toast.success('Soft skill updated successfully!')
-      setEditingSoftSkillId(null)
-      setShowSoftSkillForm(false)
-      resetSoftSkill()
-    },
-  })
-
-  const deleteSoftSkillMutation = useMutation({
-    mutationFn: async (id: string) => {
-      await axios.delete(`/skills/soft/${id}`)
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['soft-skills'] })
-      queryClient.invalidateQueries({ queryKey: ['skills'] })
-      toast.success('Soft skill deleted successfully!')
+      toast.success('Skill deleted!')
     },
   })
 
@@ -249,19 +161,14 @@ export default function SkillsManager() {
     watch: watchCategory,
   } = useForm<CategoryFormData>({
     resolver: zodResolver(categorySchema),
-    defaultValues: {
-      tags: [],
-      order: 0,
-    },
+    defaultValues: { tags: [], order: 0 },
   })
 
   const categoryTags = watchCategory('tags') || []
 
   const addCategoryTag = () => {
     const tag = prompt('Enter tag name:')
-    if (tag) {
-      setValueCategory('tags', [...categoryTags, tag])
-    }
+    if (tag) setValueCategory('tags', [...categoryTags, tag])
   }
 
   const removeCategoryTag = (index: number) => {
@@ -276,37 +183,7 @@ export default function SkillsManager() {
     setValue: setValueSkill,
   } = useForm<SkillFormData>({
     resolver: zodResolver(skillSchema),
-    defaultValues: {
-      level: 0,
-      order: 0,
-    },
-  })
-
-  // Advanced skill form
-  const {
-    register: registerAdvancedSkill,
-    handleSubmit: handleSubmitAdvancedSkill,
-    reset: resetAdvancedSkill,
-    setValue: setValueAdvancedSkill,
-  } = useForm<AdvancedSkillFormData>({
-    resolver: zodResolver(advancedSkillSchema),
-    defaultValues: {
-      category: 'ai',
-      order: 0,
-    },
-  })
-
-  // Soft skill form
-  const {
-    register: registerSoftSkill,
-    handleSubmit: handleSubmitSoftSkill,
-    reset: resetSoftSkill,
-    setValue: setValueSoftSkill,
-  } = useForm<SoftSkillFormData>({
-    resolver: zodResolver(softSkillSchema),
-    defaultValues: {
-      order: 0,
-    },
+    defaultValues: { level: 0, order: 0, isActive: true, isTrending: false },
   })
 
   const startEditCategory = (category: any) => {
@@ -325,22 +202,8 @@ export default function SkillsManager() {
     setValueSkill('name', skill.name)
     setValueSkill('level', skill.level || 0)
     setValueSkill('order', skill.order || 0)
-  }
-
-  const startEditAdvancedSkill = (skill: any) => {
-    setEditingAdvancedSkillId(skill.id)
-    setShowAdvancedSkillForm(true)
-    setValueAdvancedSkill('category', skill.category)
-    setValueAdvancedSkill('skill', skill.skill)
-    setValueAdvancedSkill('order', skill.order || 0)
-  }
-
-  const startEditSoftSkill = (skill: any) => {
-    setEditingSoftSkillId(skill.id)
-    setShowSoftSkillForm(true)
-    setValueSoftSkill('title', skill.title)
-    setValueSoftSkill('description', skill.description)
-    setValueSoftSkill('order', skill.order || 0)
+    setValueSkill('isActive', skill.isActive ?? true)
+    setValueSkill('isTrending', skill.isTrending ?? false)
   }
 
   const onSubmitCategory = (data: CategoryFormData) => {
@@ -352,10 +215,7 @@ export default function SkillsManager() {
   }
 
   const onSubmitSkill = (data: SkillFormData) => {
-    if (!editingCategoryIdForSkill) {
-      toast.error('Please select a category')
-      return
-    }
+    if (!editingCategoryIdForSkill) return
     if (editingSkillId) {
       updateSkillMutation.mutate({ categoryId: editingCategoryIdForSkill, id: editingSkillId, data })
     } else {
@@ -363,546 +223,165 @@ export default function SkillsManager() {
     }
   }
 
-  const onSubmitAdvancedSkill = (data: AdvancedSkillFormData) => {
-    if (editingAdvancedSkillId) {
-      updateAdvancedSkillMutation.mutate({ id: editingAdvancedSkillId, data })
-    } else {
-      createAdvancedSkillMutation.mutate(data)
-    }
-  }
-
-  const onSubmitSoftSkill = (data: SoftSkillFormData) => {
-    if (editingSoftSkillId) {
-      updateSoftSkillMutation.mutate({ id: editingSoftSkillId, data })
-    } else {
-      createSoftSkillMutation.mutate(data)
-    }
-  }
-
   const isLoading = categoriesLoading || advancedLoading || softLoading
 
-  if (isLoading) {
-    return <div>Loading...</div>
-  }
-
-  const aiSkills = advancedSkills?.filter((s: any) => s.category === 'ai') || []
-  const cloudSkills = advancedSkills?.filter((s: any) => s.category === 'cloud') || []
+  if (isLoading) return <div className="p-8 text-center">Loading...</div>
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold">Skills Management</h2>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-bold text-gray-800">Skills Management</h2>
       </div>
 
-      {/* Tabs */}
-      <div className="border-b border-gray-200 mb-6">
-        <nav className="flex space-x-8">
+      <nav className="flex gap-4 border-b border-gray-200">
+        {(['categories', 'advanced', 'soft'] as const).map(tab => (
           <button
-            onClick={() => setActiveTab('categories')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'categories'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`py-3 px-4 text-sm font-bold border-b-2 transition-all ${activeTab === tab ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+              } uppercase tracking-wider`}
           >
-            Skill Categories
+            {tab}
           </button>
-          <button
-            onClick={() => setActiveTab('advanced')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'advanced'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Advanced Skills
-          </button>
-          <button
-            onClick={() => setActiveTab('soft')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'soft'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Soft Skills
-          </button>
-        </nav>
-      </div>
+        ))}
+      </nav>
 
-      {/* Skill Categories Tab */}
       {activeTab === 'categories' && (
-        <div>
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold">Skill Categories</h3>
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h3 className="font-bold text-gray-700 uppercase text-sm">Categories</h3>
             <button
-              onClick={() => {
-                setShowCategoryForm(!showCategoryForm)
-                setEditingCategoryId(null)
-                resetCategory()
-              }}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              onClick={() => { setShowCategoryForm(!showCategoryForm); setEditingCategoryId(null); resetCategory(); }}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-bold shadow-sm"
             >
               {showCategoryForm ? 'Cancel' : '+ Add Category'}
             </button>
           </div>
 
           {showCategoryForm && (
-            <form
-              onSubmit={handleSubmitCategory(onSubmitCategory)}
-              className="bg-gray-50 p-6 rounded-lg mb-6 space-y-4"
-            >
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Title
-                </label>
-                <input
-                  {...registerCategory('title')}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                />
+            <form onSubmit={handleSubmitCategory(onSubmitCategory)} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Title</label>
+                  <input {...registerCategory('title')} className="w-full px-4 py-2 border rounded-lg" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Icon (FA Class)</label>
+                  <input {...registerCategory('icon')} className="w-full px-4 py-2 border rounded-lg" placeholder="fas fa-code" />
+                </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Icon (FontAwesome class)
-                </label>
-                <input
-                  {...registerCategory('icon')}
-                  placeholder="fas fa-code"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Tags
-                </label>
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Tags</label>
                 <div className="flex flex-wrap gap-2 mb-2">
-                  {categoryTags.map((tag, index) => (
-                    <span
-                      key={index}
-                      className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm flex items-center gap-2"
-                    >
+                  {categoryTags.map((tag, i) => (
+                    <span key={i} className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-bold flex items-center gap-2">
                       {tag}
-                      <button
-                        type="button"
-                        onClick={() => removeCategoryTag(index)}
-                        className="text-red-600 hover:text-red-800"
-                      >
-                        ×
-                      </button>
+                      <button type="button" onClick={() => removeCategoryTag(i)} className="text-red-400 hover:text-red-600">×</button>
                     </span>
                   ))}
+                  <button type="button" onClick={addCategoryTag} className="px-3 py-1 border border-dashed border-gray-300 rounded-full text-xs text-gray-500 hover:border-blue-400 hover:text-blue-600">
+                    + Add Tag
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={addCategoryTag}
-                  className="text-sm text-blue-600 hover:text-blue-800"
-                >
-                  + Add Tag
+              </div>
+              <button type="submit" className="w-full py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition shadow-md">
+                {editingCategoryId ? 'Update Category' : 'Create Category'}
+              </button>
+            </form>
+          )}
+
+          <div className="grid grid-cols-1 gap-4">
+            {categories?.map((category: any) => (
+              <div key={category.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                <div className="bg-gray-50 px-6 py-4 flex justify-between items-center border-b border-gray-100">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-white rounded-lg text-blue-600 shadow-sm border border-gray-100">
+                      <i className={category.icon || 'fas fa-code'}></i>
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-gray-800">{category.title}</h4>
+                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{category.skills?.length || 0} Skills</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => startEditCategory(category)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"><i className="fas fa-edit"></i></button>
+                    <button onClick={() => { setEditingCategoryIdForSkill(category.id); setShowSkillForm(true); resetSkill(); }} className="px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition">+ Skill</button>
+                    <button onClick={() => deleteCategoryMutation.mutate(category.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"><i className="fas fa-trash"></i></button>
+                  </div>
+                </div>
+
+                <div className="p-4 space-y-2">
+                  {category.skills?.map((skill: any) => (
+                    <div key={skill.id} className="flex justify-between items-center p-3 rounded-lg border border-gray-50 hover:border-gray-100 transition shadow-sm">
+                      <div className="flex items-center gap-4">
+                        <div className="flex flex-col">
+                          <span className="font-bold text-sm text-gray-700">{skill.name}</span>
+                          <div className="w-24 h-1 bg-gray-100 rounded-full mt-1 overflow-hidden">
+                            <div className="h-full bg-blue-500" style={{ width: `${skill.level}%` }}></div>
+                          </div>
+                        </div>
+                        {skill.isTrending && (
+                          <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 text-[8px] font-bold rounded uppercase tracking-tighter">Trending</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => updateSkillMutation.mutate({ categoryId: category.id, id: skill.id, data: { isActive: !skill.isActive } })}
+                          className={`px-3 py-1 rounded-full text-[10px] font-bold transition-all border ${skill.isActive ? 'bg-green-50 text-green-600 border-green-100' : 'bg-gray-50 text-gray-400 border-gray-100'
+                            }`}
+                        >
+                          {skill.isActive ? 'ACTIVE' : 'INACTIVE'}
+                        </button>
+                        <button onClick={() => startEditSkill(category.id, skill)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition"><i className="fas fa-edit text-xs"></i></button>
+                        <button onClick={() => deleteSkillMutation.mutate({ categoryId: category.id, id: skill.id })} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition"><i className="fas fa-trash text-xs"></i></button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {showSkillForm && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl space-y-6">
+            <h3 className="text-xl font-bold text-gray-800">{editingSkillId ? 'Edit Skill' : 'Add New Skill'}</h3>
+            <form onSubmit={handleSubmitSkill(onSubmitSkill)} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Name</label>
+                <input {...registerSkill('name')} className="w-full px-4 py-2 border rounded-lg" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Level (%)</label>
+                  <input type="number" {...registerSkill('level', { valueAsNumber: true })} className="w-full px-4 py-2 border rounded-lg" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Order</label>
+                  <input type="number" {...registerSkill('order', { valueAsNumber: true })} className="w-full px-4 py-2 border rounded-lg" />
+                </div>
+              </div>
+              <div className="flex items-center gap-4 py-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" {...registerSkill('isActive')} className="rounded text-blue-600" />
+                  <span className="text-sm font-bold text-gray-600">Visible on Resume</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" {...registerSkill('isTrending')} className="rounded text-yellow-500" />
+                  <span className="text-sm font-bold text-gray-600">Trending Skill</span>
+                </label>
+              </div>
+              <div className="flex gap-3 pt-4">
+                <button type="submit" className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 shadow-lg transition active:scale-95">
+                  {editingSkillId ? 'Update' : 'Create'} Skill
+                </button>
+                <button type="button" onClick={() => setShowSkillForm(false)} className="px-6 py-3 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition">
+                  Cancel
                 </button>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Order
-                </label>
-                <input
-                  type="number"
-                  {...registerCategory('order', { valueAsNumber: true })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={createCategoryMutation.isPending || updateCategoryMutation.isPending}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-              >
-                {editingCategoryId ? 'Update' : 'Create'} Category
-              </button>
             </form>
-          )}
-
-          <div className="space-y-4">
-            {categories?.map((category: any) => (
-              <div
-                key={category.id}
-                className="bg-white border border-gray-200 rounded-lg p-4"
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h4 className="font-semibold text-lg">{category.title}</h4>
-                    {category.icon && (
-                      <span className="text-gray-600 text-sm">
-                        <i className={category.icon}></i> {category.icon}
-                      </span>
-                    )}
-                    {category.tags && category.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {category.tags.map((tag: string, i: number) => (
-                          <span
-                            key={i}
-                            className="bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => startEditCategory(category)}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => {
-                        setEditingCategoryIdForSkill(category.id)
-                        setShowSkillForm(true)
-                        resetSkill()
-                      }}
-                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                    >
-                      + Add Skill
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (confirm('Are you sure you want to delete this category?')) {
-                          deleteCategoryMutation.mutate(category.id)
-                        }
-                      }}
-                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-
-                {category.skills && category.skills.length > 0 && (
-                  <div className="mt-4 space-y-2">
-                    {category.skills.map((skill: any) => (
-                      <div
-                        key={skill.id}
-                        className="bg-gray-50 p-3 rounded flex justify-between items-center"
-                      >
-                        <div>
-                          <span className="font-medium">{skill.name}</span>
-                          <span className="text-gray-600 ml-2">
-                            Level: {skill.level}%
-                          </span>
-                        </div>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => startEditSkill(category.id, skill)}
-                            className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => {
-                              if (confirm('Are you sure you want to delete this skill?')) {
-                                deleteSkillMutation.mutate({ categoryId: category.id, id: skill.id })
-                              }
-                            }}
-                            className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {showSkillForm && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-                <h3 className="text-xl font-semibold mb-4">
-                  {editingSkillId ? 'Edit Skill' : 'Add Skill'}
-                </h3>
-                <form onSubmit={handleSubmitSkill(onSubmitSkill)} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Name
-                    </label>
-                    <input
-                      {...registerSkill('name')}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Level (0-100)
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      {...registerSkill('level', { valueAsNumber: true })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Order
-                    </label>
-                    <input
-                      type="number"
-                      {...registerSkill('order', { valueAsNumber: true })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      type="submit"
-                      disabled={createSkillMutation.isPending || updateSkillMutation.isPending}
-                      className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                    >
-                      {editingSkillId ? 'Update' : 'Create'} Skill
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowSkillForm(false)
-                        setEditingSkillId(null)
-                        setEditingCategoryIdForSkill(null)
-                        resetSkill()
-                      }}
-                      className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Advanced Skills Tab */}
-      {activeTab === 'advanced' && (
-        <div>
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold">Advanced Skills</h3>
-            <button
-              onClick={() => {
-                setShowAdvancedSkillForm(!showAdvancedSkillForm)
-                setEditingAdvancedSkillId(null)
-                resetAdvancedSkill()
-              }}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            >
-              {showAdvancedSkillForm ? 'Cancel' : '+ Add Advanced Skill'}
-            </button>
-          </div>
-
-          {showAdvancedSkillForm && (
-            <form
-              onSubmit={handleSubmitAdvancedSkill(onSubmitAdvancedSkill)}
-              className="bg-gray-50 p-6 rounded-lg mb-6 space-y-4"
-            >
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Category
-                </label>
-                <select
-                  {...registerAdvancedSkill('category')}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                >
-                  <option value="ai">AI</option>
-                  <option value="cloud">Cloud</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Skill
-                </label>
-                <input
-                  {...registerAdvancedSkill('skill')}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Order
-                </label>
-                <input
-                  type="number"
-                  {...registerAdvancedSkill('order', { valueAsNumber: true })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={createAdvancedSkillMutation.isPending || updateAdvancedSkillMutation.isPending}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-              >
-                {editingAdvancedSkillId ? 'Update' : 'Create'} Advanced Skill
-              </button>
-            </form>
-          )}
-
-          <div className="grid grid-cols-2 gap-6">
-            <div>
-              <h4 className="font-semibold mb-4">AI Skills</h4>
-              <div className="space-y-2">
-                {aiSkills.map((skill: any) => (
-                  <div
-                    key={skill.id}
-                    className="bg-white border border-gray-200 rounded-lg p-3 flex justify-between items-center"
-                  >
-                    <span>{skill.skill}</span>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => startEditAdvancedSkill(skill)}
-                        className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (confirm('Are you sure you want to delete this skill?')) {
-                            deleteAdvancedSkillMutation.mutate(skill.id)
-                          }
-                        }}
-                        className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Cloud Skills</h4>
-              <div className="space-y-2">
-                {cloudSkills.map((skill: any) => (
-                  <div
-                    key={skill.id}
-                    className="bg-white border border-gray-200 rounded-lg p-3 flex justify-between items-center"
-                  >
-                    <span>{skill.skill}</span>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => startEditAdvancedSkill(skill)}
-                        className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (confirm('Are you sure you want to delete this skill?')) {
-                            deleteAdvancedSkillMutation.mutate(skill.id)
-                          }
-                        }}
-                        className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Soft Skills Tab */}
-      {activeTab === 'soft' && (
-        <div>
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold">Soft Skills</h3>
-            <button
-              onClick={() => {
-                setShowSoftSkillForm(!showSoftSkillForm)
-                setEditingSoftSkillId(null)
-                resetSoftSkill()
-              }}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            >
-              {showSoftSkillForm ? 'Cancel' : '+ Add Soft Skill'}
-            </button>
-          </div>
-
-          {showSoftSkillForm && (
-            <form
-              onSubmit={handleSubmitSoftSkill(onSubmitSoftSkill)}
-              className="bg-gray-50 p-6 rounded-lg mb-6 space-y-4"
-            >
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Title
-                </label>
-                <input
-                  {...registerSoftSkill('title')}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description
-                </label>
-                <textarea
-                  {...registerSoftSkill('description')}
-                  rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Order
-                </label>
-                <input
-                  type="number"
-                  {...registerSoftSkill('order', { valueAsNumber: true })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={createSoftSkillMutation.isPending || updateSoftSkillMutation.isPending}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-              >
-                {editingSoftSkillId ? 'Update' : 'Create'} Soft Skill
-              </button>
-            </form>
-          )}
-
-          <div className="space-y-4">
-            {softSkills?.map((skill: any) => (
-              <div
-                key={skill.id}
-                className="bg-white border border-gray-200 rounded-lg p-4 flex justify-between items-start"
-              >
-                <div>
-                  <h4 className="font-semibold text-lg">{skill.title}</h4>
-                  <p className="text-gray-600 text-sm mt-1">{skill.description}</p>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => startEditSoftSkill(skill)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (confirm('Are you sure you want to delete this soft skill?')) {
-                        deleteSoftSkillMutation.mutate(skill.id)
-                      }
-                    }}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       )}

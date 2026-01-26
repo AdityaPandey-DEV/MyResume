@@ -11,6 +11,7 @@ import SkillsManager from '@/components/admin/SkillsManager'
 import EducationManager from '@/components/admin/EducationManager'
 import CertificationsManager from '@/components/admin/CertificationsManager'
 import SyncManager from '@/components/admin/SyncManager'
+import CareerInsights from '@/components/admin/CareerInsights'
 
 export default function AdminPage() {
   const router = useRouter()
@@ -39,6 +40,7 @@ export default function AdminPage() {
     { id: 'skills', label: 'Skills' },
     { id: 'education', label: 'Education' },
     { id: 'certifications', label: 'Certifications' },
+    { id: 'insights', label: 'AI Career Advisor' },
     { id: 'sync', label: 'Sync & Settings' },
   ]
 
@@ -89,6 +91,7 @@ export default function AdminPage() {
             {activeTab === 'skills' && <SkillsManager />}
             {activeTab === 'education' && <EducationManager />}
             {activeTab === 'certifications' && <CertificationsManager />}
+            {activeTab === 'insights' && <CareerInsights />}
             {activeTab === 'sync' && <SyncManager />}
           </div>
         </div>

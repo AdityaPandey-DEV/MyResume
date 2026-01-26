@@ -221,6 +221,8 @@ model Skill {
   name           String
   level          Int           @default(0) // 0-100
   order          Int           @default(0)
+  isActive       Boolean       @default(true)
+  isTrending     Boolean       @default(false)
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
@@ -333,4 +335,29 @@ model SocialStat {
   connections Int    @default(0)
   lastSyncedAt DateTime @default(now())
 }
+// AI Career Advisor & Analysis
+model UserAnalysis {
+  id              String   @id @default(cuid())
+  holisticPersona String   @db.Text // AI generated persona based on all platforms
+  strengths       String[]
+  gaps            String[]
+  topTechStack    String[]
+  suggestedFocus  String?  @db.Text
+  analysisDate    DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
 
+model CareerSuggestion {
+  id             String   @id @default(cuid())
+  type           String   // "course", "skill", "dsa", "trend"
+  title          String
+  description    String   @db.Text
+  difficulty     String?  // "Beginner", "Intermediate", "Advanced"
+  relevanceScore Int      @default(0) // 0-100
+  actionUrl      String?
+  isApplied      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([type])
+}

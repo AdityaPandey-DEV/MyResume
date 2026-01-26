@@ -8,6 +8,7 @@ export async function GET() {
       orderBy: { order: 'asc' },
       include: {
         skills: {
+          where: { isActive: true },
           orderBy: { order: 'asc' },
         },
       },
