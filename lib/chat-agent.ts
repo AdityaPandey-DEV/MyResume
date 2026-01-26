@@ -40,7 +40,7 @@ export async function generateChatResponse(message: string, sessionId: string) {
         // Optimization: You could cache this string.
         const [about, projects, skills, experience, codingProfileData] = await Promise.all([
             prisma.about.findFirst({ include: { values: true, focusAreas: true, journey: true } }),
-            prisma.project.findMany({ where: { isVisible: true } }),
+            prisma.project.findMany(),
             prisma.skill.findMany({ where: { isActive: true }, include: { category: true } }),
             prisma.experience.findMany(),
             prisma.codingProfile.findUnique({ where: { platform: 'leetcode' } }),
