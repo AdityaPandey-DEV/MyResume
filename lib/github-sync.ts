@@ -40,9 +40,34 @@ export async function syncProjectFromGithub(projectId: string, repoUrl: string) 
         }
 
         // Generate Description using Gemini
-        // We pass the existing description or the one from GitHub
         const enhancedDescription = await enhanceContent(data.description || '', 'projects');
         const finalDescription = enhancedDescription || data.description || "No description provided.";
+
+        // Enhance with Icon and Gradient if no image available
+        let icon = null;
+        let gradient = null;
+
+        if (!imageUrl) {
+            try {
+                // Generate a suitable icon name from title + description
+                const iconName = await enhanceContent(`${data.name} ${data.description || ''}`, 'project-icon');
+                icon = iconName.startsWith('fa-') ? `fas ${iconName}` : `fas fa-${iconName}`;
+
+                // Assign a random vibrant gradient
+                const gradients = [
+                    'from-blue-600 to-indigo-700',
+                    'from-purple-600 to-pink-600',
+                    'from-rose-500 to-orange-500',
+                    'from-emerald-500 to-teal-700',
+                    'from-cyan-500 to-blue-600',
+                    'from-violet-600 to-purple-800',
+                    'from-amber-500 to-red-600'
+                ];
+                gradient = gradients[Math.floor(Math.random() * gradients.length)];
+            } catch (err) {
+                console.error("AI Icon generation failed:", err);
+            }
+        }
 
         // Update Project in DB
         const updatedProject = await prisma.project.update({
@@ -53,6 +78,8 @@ export async function syncProjectFromGithub(projectId: string, repoUrl: string) 
                 githubUrl: data.html_url,
                 liveDemoUrl: liveDemoUrl,
                 ...(imageUrl && { imageUrl }),
+                ...(!imageUrl && icon && { icon }),
+                ...(!imageUrl && gradient && { gradient }),
                 repoUrl: repoUrl,
                 lastSyncedAt: new Date(),
                 syncEnabled: true,

@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-export async function enhanceContent(text: string, type: 'about' | 'experience' | 'skills' | 'projects' | 'hero-title' | 'hero-description'): Promise<string> {
+export async function enhanceContent(text: string, type: 'about' | 'experience' | 'skills' | 'projects' | 'hero-title' | 'hero-description' | 'project-icon'): Promise<string> {
     if (!process.env.GEMINI_API_KEY) {
         console.warn("GEMINI_API_KEY is missing. Returning original text.");
         return text;
@@ -73,6 +73,15 @@ export async function enhanceContent(text: string, type: 'about' | 'experience' 
                 - Focus on what the project DOES and the IMPACT.
                 
                 Original Description: "${text}"
+                `;
+            } else if (type as any === 'project-icon') {
+                prompt = `
+                Find the single most suitable FontAwesome 6 (solid) icon name for this project.
+                - Return ONLY the icon name (e.g., "fa-cloud", "fa-code", "fa-lock", "fa-brain"). No "fa-solid" prefix.
+                - Focus on the PROJECT PURPOSE.
+                - Example: Weather App -> "fa-sun", Security App -> "fa-shield-halved", Calculator -> "fa-calculator".
+                
+                Project Info: "${text}"
                 `;
             }
 
