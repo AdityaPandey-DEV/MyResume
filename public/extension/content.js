@@ -51,15 +51,24 @@ function parseCertItem(item) {
     const anchor = item.querySelector('a.app-aware-link');
     const url = anchor ? anchor.href : '';
 
-    // Try to find image
-    const img = item.querySelector('img');
+    // BETTER IMAGE EXTRACTION
+    // 1. Look for internal media images (The ACTUAL certificate preview)
+    const mediaImg = item.querySelector('.pvs-entity__extra-contents img, .pvs-list__outer-container img, .pvs-media-entity img');
+
+    // 2. Look for company logo (favicon)
+    const logoImg = item.querySelector('.ivm-view-model img, .ivm-image-view-model img, img');
+
+    // Prioritize media for imageUrl, use logo for logoUrl
+    const imageUrl = mediaImg ? mediaImg.src : '';
+    const logoUrl = logoImg ? logoImg.src : '';
 
     return {
         title: titleEl ? titleEl.innerText.trim() : '',
         organization: issuerEl ? issuerEl.innerText.trim() : '',
         date: dateEl ? dateEl.innerText.trim() : '',
         url: url,
-        imageUrl: img ? img.src : ''
+        imageUrl: imageUrl,
+        logoUrl: logoUrl
     };
 }
 

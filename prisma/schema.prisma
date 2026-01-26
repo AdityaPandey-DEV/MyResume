@@ -281,6 +281,7 @@ model Certification {
   tags           String[]
   certificateUrl String?
   imageUrl       String? // For the PDF thumbnail/preview
+  logoUrl        String? // For the company favicon
   icon           String?
   color          String?
   order          Int      @default(0)

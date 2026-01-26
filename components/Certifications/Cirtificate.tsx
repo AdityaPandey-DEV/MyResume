@@ -13,6 +13,7 @@ export default function Certificate({
   tags,
   certificateLink,
   imageUrl,
+  logoUrl,
 }: {
   title: string
   icon: string
@@ -23,6 +24,7 @@ export default function Certificate({
   tags: string
   certificateLink: string
   imageUrl?: string
+  logoUrl?: string
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false)
 
@@ -60,8 +62,12 @@ export default function Certificate({
         <div className="relative z-10 bg-white h-full flex flex-col">
           <div className={`bg-gradient-to-r ${gradientClass} p-6 flex items-center justify-between`}>
             <h3 className="text-xl font-bold text-white line-clamp-2 leading-tight">{title}</h3>
-            <div className="bg-white/20 backdrop-blur-md text-white w-12 h-12 shrink-0 rounded-xl border border-white/30 flex items-center justify-center shadow-inner">
-              <i className={`fa-solid ${icon} text-xl`}></i>
+            <div className="bg-white/20 backdrop-blur-md text-white w-12 h-12 shrink-0 rounded-xl border border-white/30 flex items-center justify-center shadow-inner overflow-hidden">
+              {logoUrl ? (
+                <img src={logoUrl} alt={organization} className="w-full h-full object-cover" />
+              ) : (
+                <i className={`fa-solid ${icon} text-xl`}></i>
+              )}
             </div>
           </div>
           <div className="p-6 flex-grow">
@@ -101,16 +107,10 @@ export default function Certificate({
         </div>
 
         {/* Hover Overlay (Image Preview) */}
-        {imageUrl && (
+        {(imageUrl || logoUrl) && (
           <div className="absolute inset-0 z-20 bg-gray-900 bg-opacity-95 text-white transform -translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-in-out flex flex-col items-center justify-center overflow-hidden">
-            {/* Using standard img for external/user content if domain not configured in next.config.js, 
-                 but warning suggests using Image. Since we don't know domains, sticking to img is safer to avoid 'hostname not configured' error, 
-                 but we'll suppress the warning if possible or just ignore it as it's a warning. 
-                 Actually, the build failed on errors, warnings were just warnings. 
-                 The build error was Type Error.
-             */}
             <img
-              src={imageUrl}
+              src={imageUrl || logoUrl}
               alt="Certificate Preview"
               className="w-full h-48 object-cover mb-4 opacity-50"
             />
@@ -146,7 +146,7 @@ export default function Certificate({
               </button>
             </div>
             <div className="p-1 bg-gray-100 flex-grow overflow-auto flex items-center justify-center">
-              <img src={imageUrl} alt={title} className="max-w-full max-h-[80vh] shadow-lg" />
+              <img src={imageUrl || logoUrl} alt={title} className="max-w-full max-h-[80vh] shadow-lg" />
             </div>
             <div className="p-4 border-t flex justify-end gap-3 bg-gray-50">
               <button

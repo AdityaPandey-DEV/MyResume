@@ -387,6 +387,7 @@ async function handleManualImport(data: any) {
                     description: cert.description || '',
                     certificateUrl: cert.url || null,
                     imageUrl: cert.imageUrl || null,
+                    logoUrl: cert.logoUrl || null,
                     tags: cert.tags || [],
                     icon: icon,
                     color: color,
