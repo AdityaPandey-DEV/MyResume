@@ -197,6 +197,7 @@ async function handleManualImport(data: any) {
     // 2. Process Skills (Categorized)
     if (data.skills && Array.isArray(data.skills)) {
         await prisma.skill.deleteMany({});
+        await prisma.skillCategory.deleteMany({}); // Clear categories to remove empty ones
         const skillsString = data.skills.join(', ');
 
         let categorizedSkills: Record<string, string[]> = {
@@ -216,20 +217,20 @@ async function handleManualImport(data: any) {
         }
 
         const categoryIcons: Record<string, string> = {
-            "Programming": "fas fa-code",
-            "Frontend": "fas fa-laptop-code",
-            "Backend": "fas fa-server",
-            "Tools & DevOps": "fas fa-tools"
+            "Programming": "fa-code",
+            "Frontend": "fa-laptop-code",
+            "Backend": "fa-server",
+            "Tools & DevOps": "fa-tools"
         };
 
         for (const [title, skills] of Object.entries(categorizedSkills)) {
-            const category = await prisma.skillCategory.upsert({
-                where: { id: title.toLowerCase().replace(/\s+/g, '-') },
-                update: { title },
-                create: {
+            if ((skills as string[]).length === 0) continue; // Skip empty categories
+
+            const category = await prisma.skillCategory.create({
+                data: {
                     id: title.toLowerCase().replace(/\s+/g, '-'),
                     title,
-                    icon: categoryIcons[title] || "fas fa-code",
+                    icon: categoryIcons[title] || "fa-code",
                     order: 0
                 }
             });
@@ -273,15 +274,42 @@ async function handleManualImport(data: any) {
         }
     }
 
+    // 3b. Process Advanced & Soft Skills (New)
+    // We can infer some advanced skills from the existing data
+    if (data.skills && Array.isArray(data.skills)) {
+        await prisma.advancedSkill.deleteMany({});
+        await prisma.softSkill.deleteMany({});
+
+        // In a real scenario, we'd use Gemini to categorize these too.
+        // For now, let's provide smart defaults based on common dev profiles
+        const aiRelated = data.skills.filter((s: string) => /ai|ml|learning|data|gpt|vision/i.test(s));
+        const cloudRelated = data.skills.filter((s: string) => /cloud|aws|azure|gcp|docker|kubernetes|vercel/i.test(s));
+        const softRelated = ["Problem Solving", "Team Leadership", "Communication", "Adaptability"];
+
+        for (const skill of aiRelated.slice(0, 4)) {
+            await prisma.advancedSkill.create({ data: { category: 'ai', skill } });
+        }
+        for (const skill of cloudRelated.slice(0, 4)) {
+            await prisma.advancedSkill.create({ data: { category: 'cloud', skill } });
+        }
+        for (const skill of softRelated) {
+            await prisma.softSkill.create({
+                data: {
+                    title: skill,
+                    description: `Demonstrated expertise in ${skill.toLowerCase()} through various projects and collaborations.`
+                }
+            });
+        }
+    }
     // 4. Update Education
     if (data.education && Array.isArray(data.education)) {
         await prisma.education.deleteMany({});
 
         // Match the 3-tier style from HTML (Blue, Indigo, Purple)
         const styles = [
-            { bg: "bg-blue-600", light: "text-blue-100", pill: "bg-blue-50", pillText: "text-blue-600", icon: "graduation-cap" },
-            { bg: "bg-indigo-600", light: "text-indigo-100", pill: "bg-indigo-50", pillText: "text-indigo-600", icon: "school" },
-            { bg: "bg-purple-600", light: "text-purple-100", pill: "bg-purple-50", pillText: "text-purple-600", icon: "book" }
+            { bg: "bg-blue-600", light: "text-blue-100", pill: "bg-blue-50", pillText: "text-blue-600", icon: "fa-graduation-cap" },
+            { bg: "bg-indigo-600", light: "text-indigo-100", pill: "bg-indigo-50", pillText: "text-indigo-600", icon: "fa-school" },
+            { bg: "bg-purple-600", light: "text-purple-100", pill: "bg-purple-50", pillText: "text-purple-600", icon: "fa-book" }
         ];
 
         for (let i = 0; i < data.education.length; i++) {
