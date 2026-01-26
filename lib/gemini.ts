@@ -21,13 +21,18 @@ export async function generateEnhancedDescription(currentDescription: string, re
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
         const prompt = `
-      You are an expert technical writer. Rewrite the following project description to be professional, impactful, and suitable for a FAANG-level resume.
-      Focus on technologies, impact, and complexity.
+      You are an expert technical writer. Rewrite the following project description based on the provided README context.
+      - Make it professional, high-impact, and suitable for a senior developer resume.
+      - FOCUS on what the project actually achieves according to the README.
       
-      Original Description: ${currentDescription}
-      ${readmeContext ? `Context from README: ${readmeContext.substring(0, 500)}...` : ''}
+      Original Description (Fallback): ${currentDescription}
+      ${readmeContext ? `PRIMARY CONTEXT FROM README:
+      ${readmeContext.substring(0, 2000)}` : ''}
       
-      Output only the rewritten description. Keep it concise (under 40 words).
+      OUTPUT RULES:
+      1. Return ONLY the rewritten description text.
+      2. STRICT WORD LIMIT: Under 30 words.
+      3. No quotes, no intro text, no formatting.
     `;
 
         const result = await model.generateContent(prompt);

@@ -427,8 +427,8 @@ export default function ProjectsManager() {
                 onClick={async () => {
                   const repoUrl = watch('repoUrl');
                   const currentDesc = watch('description');
-                  if (!repoUrl && !currentDesc) {
-                    toast.error('Please enter a GitHub Repo URL or initial description');
+                  if (!repoUrl) {
+                    toast.error('GitHub Repo URL is required to read the README');
                     return;
                   }
 
