@@ -118,12 +118,46 @@ export default function HeroEditor() {
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Image URL
+          upload profile image
         </label>
-        <input
-          {...register('imageUrl')}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-        />
+        <div className="flex gap-4 items-center">
+          <input
+            {...register('imageUrl')}
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            placeholder="Image URL or upload"
+          />
+          <input
+            type="file"
+            id="hero-image-upload"
+            className="hidden"
+            accept="image/*"
+            onChange={async (e) => {
+              const file = e.target.files?.[0]
+              if (!file) return
+
+              const formData = new FormData()
+              formData.append('file', file)
+
+              const toastId = toast.loading('Uploading image...')
+              try {
+                const res = await axios.post('/hero/upload', formData, {
+                  headers: { 'Content-Type': 'multipart/form-data' },
+                })
+                reset({ ...hero, imageUrl: res.data.imageUrl })
+                toast.success('Image uploaded successfully!', { id: toastId })
+              } catch (error: any) {
+                toast.error(error.response?.data?.error || 'Upload failed', { id: toastId })
+              }
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => document.getElementById('hero-image-upload')?.click()}
+            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
+          >
+            Upload
+          </button>
+        </div>
         {errors.imageUrl && (
           <p className="text-red-500 text-sm mt-1">{errors.imageUrl.message}</p>
         )}
