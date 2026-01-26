@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { scrapeLinkedInProfile } from '@/lib/linkedin-scraper';
 import { revalidatePath } from 'next/cache';
-import { getScreenshotUrl } from '@/lib/meta-helper';
+import { getScreenshotUrl, getOgImage } from '@/lib/meta-helper';
 
 
 export async function POST(req: Request) {
@@ -371,14 +371,22 @@ async function handleManualImport(data: any) {
             // Pick color based on index for variety
             const color = vibrantColors[i % vibrantColors.length];
 
-            // Resolve Image (Priority: Media Image > Screenshot of Link > Logo)
+            // Resolve Image (Priority: Media Image > OG Image > Screenshot > Logo)
             let finalImageUrl = cert.imageUrl || null;
             let finalLogoUrl = cert.logoUrl || null;
 
-            // If we only have the logo, or no image at all, try to get a screenshot of the certificate URL
-            if ((!finalImageUrl || finalImageUrl === finalLogoUrl) && cert.url) {
-                // Use a screenshot service for the actual certificate preview
-                finalImageUrl = getScreenshotUrl(cert.url);
+            // If we don't have a high-quality media image from scraping
+            const isLinkedInNativeMedia = finalImageUrl && (finalImageUrl.includes('media-proxy') || finalImageUrl.includes('licdn.com/dms/image'));
+
+            if (!isLinkedInNativeMedia && cert.url) {
+                // Try OG Image first (faster & cleaner than screenshot)
+                const ogImage = await getOgImage(cert.url);
+                if (ogImage) {
+                    finalImageUrl = ogImage;
+                } else if (!finalImageUrl || finalImageUrl === finalLogoUrl) {
+                    // Fallback to screenshot if still no good preview
+                    finalImageUrl = getScreenshotUrl(cert.url);
+                }
             }
 
             // Find best matching icon

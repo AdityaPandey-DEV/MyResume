@@ -52,12 +52,13 @@ export default function Certificate({
   const gradientClass = colorMap[finalColor] || 'from-blue-500 to-blue-700'
 
   const [imgError, setImgError] = useState(false)
+  const [showWebsite, setShowWebsite] = useState(false)
 
   return (
     <>
       <div
         className="group relative bg-white rounded-xl shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition duration-300 cursor-pointer"
-        onClick={() => (imageUrl || logoUrl) && setIsModalOpen(true)}
+        onClick={() => (imageUrl || logoUrl || certificateLink) && setIsModalOpen(true)}
       >
 
         {/* Header Section (Colored/Image) */}
@@ -116,7 +117,7 @@ export default function Certificate({
               </a>
             )}
 
-            {imageUrl && (
+            {(imageUrl || certificateLink) && (
               <span className="text-xs text-gray-400 flex items-center gap-1">
                 <i className="fas fa-expand"></i> Click to preview
               </span>
@@ -149,34 +150,67 @@ export default function Certificate({
           {/* Backdrop with Blur */}
           <div
             className="absolute inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
-            onClick={() => setIsModalOpen(false)}
+            onClick={() => {
+              setIsModalOpen(false)
+              setShowWebsite(false)
+            }}
           ></div>
 
           {/* Modal Content */}
-          <div className="relative z-10 bg-white rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+          <div className="relative z-10 bg-white rounded-lg shadow-2xl max-w-5xl w-full h-[90vh] overflow-hidden flex flex-col transition-all">
             <div className="flex justify-between items-center p-4 border-b">
-              <h3 className="text-xl font-bold text-gray-800">{title}</h3>
+              <div className="flex items-center gap-4">
+                <h3 className="text-xl font-bold text-gray-800">{title}</h3>
+                {certificateLink && (
+                  <button
+                    onClick={() => setShowWebsite(!showWebsite)}
+                    className={`text-xs px-3 py-1 rounded-full border transition-all flex items-center gap-2 ${showWebsite ? 'bg-blue-600 text-white border-blue-600' : 'text-blue-600 border-blue-600 hover:bg-blue-50'
+                      }`}
+                  >
+                    <i className={`fas ${showWebsite ? 'fa-image' : 'fa-globe'}`}></i>
+                    <span>{showWebsite ? 'Show Image' : 'View Live Website'}</span>
+                  </button>
+                )}
+              </div>
               <button
-                onClick={() => setIsModalOpen(false)}
-                className="text-gray-500 hover:text-red-500 transition-colors p-2"
+                onClick={() => {
+                  setIsModalOpen(false)
+                  setShowWebsite(false)
+                }}
+                className="text-gray-400 hover:text-red-500 transition-colors p-2"
               >
                 <i className="fas fa-times text-xl"></i>
               </button>
             </div>
-            <div className="p-1 bg-gray-100 flex-grow overflow-auto flex items-center justify-center min-h-[400px]">
-              {imageUrl || logoUrl ? (
-                <img src={imageUrl || logoUrl} alt={title} className="max-w-full max-h-[70vh] shadow-lg object-contain" />
+            <div className="flex-grow bg-gray-100 overflow-hidden flex items-center justify-center relative">
+              {showWebsite && certificateLink ? (
+                <iframe
+                  src={certificateLink}
+                  className="w-full h-full border-none bg-white"
+                  title="Certificate Document"
+                />
               ) : (
-                <div className="text-gray-400 flex flex-col items-center">
-                  <i className="fas fa-file-invoice text-5xl mb-4"></i>
-                  <p>Certificate preview not available</p>
-                </div>
+                imageUrl || logoUrl ? (
+                  <img
+                    src={imageUrl || logoUrl}
+                    alt={title}
+                    className="max-w-full max-h-full shadow-lg object-contain transition-transform duration-500"
+                  />
+                ) : (
+                  <div className="text-gray-400 flex flex-col items-center">
+                    <i className="fas fa-file-invoice text-5xl mb-4"></i>
+                    <p>Certificate preview not available</p>
+                  </div>
+                )
               )}
             </div>
             <div className="p-4 border-t flex justify-end gap-3 bg-gray-50">
               <button
-                onClick={() => setIsModalOpen(false)}
-                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                onClick={() => {
+                  setIsModalOpen(false)
+                  setShowWebsite(false)
+                }}
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg text-sm font-medium"
               >
                 Close
               </button>
@@ -185,7 +219,7 @@ export default function Certificate({
                   href={certificateLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 text-sm font-medium shadow-md transition-all active:scale-95"
                 >
                   <span>Open Original</span>
                   <i className="fas fa-external-link-alt"></i>
