@@ -1,0 +1,29 @@
+name: SEO Freshness Loop
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Runs daily at midnight
+  workflow_dispatch: # Allows manual trigger
+
+jobs:
+  seo-refresh:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Update Last Modified Timestamp
+        run: |
+          # Create or overwrite the file with current ISO timestamp
+          echo "{ \"lastModified\": \"$(date -u +'%Y-%m-%dT%H:%M:%S.000Z')\" }" > lib/last-updated.json
+          
+      - name: Commit and Push
+        run: |
+          git config --global user.name "SEO Bot"
+          git config --global user.email "bot@adityapandey.dev"
+          git add lib/last-updated.json
+          git commit -m "chore(seo): update sitemap timestamp [skip ci]" || exit 0
+          git push

@@ -7,8 +7,55 @@ import { Providers } from './providers'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Aditya Pandey',
-  description: 'B.Tech CSE Student & Full Stack Developer',
+  metadataBase: new URL('https://adityapandeydev.vercel.app'),
+  title: {
+    default: 'Aditya Pandey | Full Stack Developer & Software Engineer',
+    template: '%s | Aditya Pandey',
+  },
+  description: 'Portfolio of Aditya Pandey, a B.Tech CSE student and Full Stack Developer specializing in AI, Web Development, and Software Engineering. Explore projects, skills, and career insights.',
+  keywords: [
+    'aditya', 'adityapandey', 'pandeyaditya', 'pandeyji', 'pandey',
+    'aditya pande', 'aditya pande dev', 'tech', 'software engineer',
+    'full stack developer', 'web developer', 'AI engineer', 'react developer',
+    'next.js developer', 'portfolio'
+  ],
+  authors: [{ name: 'Aditya Pandey', url: 'https://adityapandeydev.vercel.app' }],
+  creator: 'Aditya Pandey',
+  publisher: 'Aditya Pandey',
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: 'https://adityapandeydev.vercel.app',
+    title: 'Aditya Pandey | Full Stack Developer',
+    description: 'Portfolio of Aditya Pandey - Full Stack Developer & AI Enthusiast.',
+    siteName: 'Aditya Pandey Portfolio',
+    images: [
+      {
+        url: '/og-image.png', // We might need to ensure this exists or use a default
+        width: 1200,
+        height: 630,
+        alt: 'Aditya Pandey Portfolio',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Aditya Pandey | Full Stack Developer',
+    description: 'Explore the portfolio of Aditya Pandey, utilizing AI and modern web tech.',
+    creator: '@adityapandey', // Replace if specific handle known, otherwise generic or remove
+    images: ['/og-image.png'],
+  },
   verification: {
     google: 'UR_Y_1at0EsezO21DXKn0x9NwST0G1mKMjh4fm1Qxdc',
   },

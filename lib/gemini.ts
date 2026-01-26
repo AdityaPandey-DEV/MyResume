@@ -1,26 +1,10 @@
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
 import { prisma } from '@/lib/prisma';
 
 export async function generateEnhancedDescription(currentDescription: string, readmeContext?: string) {
-    try {
-        const apiKey = process.env.GEMINI_API_KEY;
-
-        let validKey = apiKey;
-
-        if (!validKey) {
-            const keySetting = await prisma.adminSettings.findUnique({
-                where: { key: 'GEMINI_API_KEY' },
-            });
-            validKey = keySetting?.value;
-        }
-
-        if (!validKey) return null;
-
-        const genAI = new GoogleGenerativeAI(validKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-        const prompt = `
+    const prompt = `
       You are an expert technical writer. Rewrite the following project description based on the provided README context.
       - Make it professional, high-impact, and suitable for a senior developer resume.
       - FOCUS on what the project actually achieves according to the README.
@@ -35,16 +19,26 @@ export async function generateEnhancedDescription(currentDescription: string, re
       3. No quotes, no intro text, no formatting.
     `;
 
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        return response.text();
-    } catch (error) {
-        console.error('Gemini Generation Error:', error);
-        return null; // Fallback to original
+    // 1. Try Groq First
+    if (process.env.GROQ_API_KEY) {
+        try {
+            const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+            const completion = await groq.chat.completions.create({
+                messages: [{ role: "user", content: prompt }],
+                model: "llama-3.3-70b-versatile",
+                temperature: 0.5,
+            });
+            const result = completion.choices[0]?.message?.content?.trim();
+            if (result) {
+                console.log("✅ Groq Enhanced Description Success");
+                return result;
+            }
+        } catch (e) {
+            console.warn("⚠️ Groq Failed, falling back to Gemini", e);
+        }
     }
-}
 
-export async function generateFeaturedDetails(readmeContext: string) {
+    // 2. Fallback to Gemini
     try {
         const apiKey = process.env.GEMINI_API_KEY;
         let validKey = apiKey;
@@ -59,9 +53,19 @@ export async function generateFeaturedDetails(readmeContext: string) {
         if (!validKey) return null;
 
         const genAI = new GoogleGenerativeAI(validKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
 
-        const prompt = `
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        return response.text();
+    } catch (error) {
+        console.error('Gemini Generation Error:', error);
+        return null; // Fallback to original
+    }
+}
+
+export async function generateFeaturedDetails(readmeContext: string) {
+    const prompt = `
             You are an expert technical resume writer. Analyze the following project README and extract valuable information for a "Featured Project" spotlight section.
 
             README Context:
@@ -77,6 +81,43 @@ export async function generateFeaturedDetails(readmeContext: string) {
                 "keyFeatures": ["Feature 1", "Feature 2", ...]
             }
         `;
+
+    // 1. Try Groq First
+    if (process.env.GROQ_API_KEY) {
+        try {
+            const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+            const completion = await groq.chat.completions.create({
+                messages: [{ role: "user", content: prompt + "\nReturn ONLY valid JSON." }],
+                model: "llama-3.3-70b-versatile",
+                temperature: 0.5,
+                response_format: { type: "json_object" }
+            });
+            const result = completion.choices[0]?.message?.content?.trim();
+            if (result) {
+                console.log("✅ Groq Featured Details Success");
+                return JSON.parse(result);
+            }
+        } catch (e) {
+            console.warn("⚠️ Groq Failed, falling back to Gemini", e);
+        }
+    }
+
+    // 2. Fallback to Gemini
+    try {
+        const apiKey = process.env.GEMINI_API_KEY;
+        let validKey = apiKey;
+
+        if (!validKey) {
+            const keySetting = await prisma.adminSettings.findUnique({
+                where: { key: 'GEMINI_API_KEY' },
+            });
+            validKey = keySetting?.value;
+        }
+
+        if (!validKey) return null;
+
+        const genAI = new GoogleGenerativeAI(validKey);
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
 
         const result = await model.generateContent(prompt);
         const response = await result.response;
