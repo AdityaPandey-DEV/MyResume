@@ -51,6 +51,21 @@ export default function CareerInsights() {
             if (data.success) {
                 setAnalysis(data.analysis)
                 setSuggestions(data.suggestions)
+                toast.success('Your career persona has been refined! 🚀')
+            } else if (data.quotaExceeded) {
+                // High quality mock data for demo
+                setAnalysis({
+                    holisticPersona: "Expert Full-Stack Cloud Architect with a passion for high-performance distributed systems and sleek, intuitive user interfaces.",
+                    strengths: ["Scalable Next.js Architectures", "High-Ranked Competitive Programming", "Advanced SQL Optimization"],
+                    gaps: ["System Design at Scale", "Advanced Kubernetes Orchestration"],
+                    topTechStack: ["Next.js 15", "Prisma", "PostgreSQL", "TailwindCSS"],
+                    suggestedFocus: "Master distributed system design and cloud-native deployments to reach the Next level of seniority."
+                })
+                setSuggestions([
+                    { id: '1', type: 'skill', title: 'System Design Patterns', description: 'Mastering distributed design patterns is critical for your next senior role.', difficulty: 'Advanced', relevanceScore: 95, actionUrl: 'system-design' },
+                    { id: '2', type: 'trending', title: 'Kubernetes for Developers', description: 'Trending orchestration skill that complements your backend expertise.', difficulty: 'Intermediate', relevanceScore: 88, actionUrl: 'kubernetes' }
+                ])
+                toast.error('Daily AI limit reached. Showing high-quality demo insights for your career path!', { duration: 6000 })
             }
         } catch (e) {
             console.error(e)

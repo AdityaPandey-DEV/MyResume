@@ -29,17 +29,32 @@ export async function GET() {
 
         // 2. Perform Holistic Analysis
         const analysisRaw = await enhanceContent(contextString, 'holistic-analysis');
+        if (analysisRaw === "API_QUOTA_EXCEEDED") {
+            return NextResponse.json({
+                success: false,
+                quotaExceeded: true,
+                message: "Daily Gemini API limit reached. Showing demo data or try again later."
+            });
+        }
+
+        if (analysisRaw === contextString) throw new Error("AI Analysis failed to generate. Please check API key.");
+
         const analysis = JSON.parse(analysisRaw);
+
+        if (!analysis.persona) {
+            console.error("Incomplete AI Response:", analysis);
+            throw new Error("AI returned invalid persona format");
+        }
 
         // Save Analysis
         await prisma.userAnalysis.deleteMany({}); // Keep only latest
         const userAnalysis = await prisma.userAnalysis.create({
             data: {
-                holisticPersona: analysis.persona,
-                strengths: analysis.strengths,
-                gaps: analysis.gaps,
-                topTechStack: analysis.topTechStack,
-                suggestedFocus: analysis.suggestedFocus
+                holisticPersona: analysis.persona || "Professional Developer",
+                strengths: analysis.strengths || [],
+                gaps: analysis.gaps || [],
+                topTechStack: analysis.topTechStack || [],
+                suggestedFocus: analysis.suggestedFocus || "Continue building projects"
             }
         });
 

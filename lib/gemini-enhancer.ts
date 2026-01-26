@@ -24,7 +24,7 @@ export async function enhanceContent(text: string, type: 'about' | 'experience' 
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
         try {
             const genAI = new GoogleGenerativeAI(apiKey as string);
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
 
             let prompt = "";
 
@@ -176,6 +176,7 @@ export async function enhanceContent(text: string, type: 'about' | 'experience' 
 
         } catch (error: any) {
             console.warn(`Gemini Enhancement Attempt ${attempt} failed:`, error.message);
+            if (error.response) console.error("Gemini Error Response:", JSON.stringify(error.response, null, 2));
             lastError = error;
 
             // Check for Rate Limit (429) or Overloaded (503)
@@ -187,11 +188,18 @@ export async function enhanceContent(text: string, type: 'about' | 'experience' 
                 continue;
             }
 
+            // If it's a quota error, return a specific string for the API to handle
+            if (error.message?.includes('429')) {
+                console.error("Gemini Quota Exceeded for today.");
+                return "API_QUOTA_EXCEEDED";
+            }
+
             // If it's another error (like 400 Bad Request), break immediately
+            console.error("Breaking due to non-retryable error:", error);
             break;
         }
     }
 
-    console.error("Gemini Enhancement failed after retries. Returning original text.");
+    console.error("Gemini Enhancement failed. Returning original text.");
     return text;
 }

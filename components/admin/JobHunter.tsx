@@ -27,6 +27,9 @@ export default function JobHunter() {
     const [resumeUrl, setResumeUrl] = useState<string | null>(null)
     const [isUploading, setIsUploading] = useState(false)
     const [isActivelyLooking, setIsActivelyLooking] = useState(true)
+    const [isDiscovering, setIsDiscovering] = useState(false)
+    const [discoveredJobs, setDiscoveredJobs] = useState<any[]>([])
+    const [showDiscovery, setShowDiscovery] = useState(false)
 
     const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
@@ -116,6 +119,49 @@ export default function JobHunter() {
         }
     }
 
+    const discoverJobs = async () => {
+        setIsDiscovering(true)
+        setShowDiscovery(true)
+        try {
+            const res = await fetch('/api/career/jobs/discover', { method: 'POST' })
+            const data = await res.json()
+            if (data.success) {
+                setDiscoveredJobs(data.discoveredJobs)
+                if (data.isDemo) {
+                    toast.error('Daily AI limit reached. Showing high-quality demo matches for your stack! 💎', { duration: 5000 });
+                } else {
+                    toast.success('AI discovered new opportunities! 💎')
+                }
+            }
+        } catch (e) {
+            toast.error('Discovery failed')
+        } finally {
+            setIsDiscovering(false)
+        }
+    }
+
+    const trackDiscoveredJob = async (job: any) => {
+        try {
+            const res = await fetch('/api/career/jobs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    company: job.company,
+                    role: job.role,
+                    location: job.location,
+                    jobUrl: job.jobUrl
+                })
+            })
+            if ((await res.json()).success) {
+                toast.success(`Now tracking ${job.role} at ${job.company}`)
+                fetchJobs()
+                setDiscoveredJobs(prev => prev.filter(j => j.company !== job.company))
+            }
+        } catch (e) {
+            toast.error('Failed to track job')
+        }
+    }
+
     const generateOutreach = async (jobId: string) => {
         setIsGenerating(jobId)
         try {
@@ -176,6 +222,14 @@ export default function JobHunter() {
                         </label>
                     </div>
                     <button
+                        onClick={discoverJobs}
+                        disabled={isDiscovering}
+                        className="px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-bold hover:scale-105 transition shadow-lg h-full flex items-center gap-2"
+                    >
+                        {isDiscovering ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-wand-magic-sparkles"></i>}
+                        AI Discover Jobs
+                    </button>
+                    <button
                         onClick={() => setShowAddForm(!showAddForm)}
                         className="px-6 py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition shadow-lg h-full"
                     >
@@ -183,6 +237,54 @@ export default function JobHunter() {
                     </button>
                 </div>
             </div>
+            {showDiscovery && (
+                <div className="bg-indigo-900/5 p-8 rounded-3xl border border-indigo-100 space-y-6">
+                    <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg">
+                                <i className="fas fa-search-dollar"></i>
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-gray-800">AI Suggested Opportunities</h3>
+                                <p className="text-xs text-indigo-600 font-bold uppercase tracking-widest">Based on your Professional Persona</p>
+                            </div>
+                        </div>
+                        <button onClick={() => setShowDiscovery(false)} className="text-gray-400 hover:text-gray-600 text-sm font-bold uppercase tracking-tight">Dismiss</button>
+                    </div>
+
+                    {isDiscovering && <div className="py-12 text-center text-indigo-400 animate-pulse font-bold">AI is scanning the market for your perfect match...</div>}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {discoveredJobs.map((job, idx) => (
+                            <div key={idx} className="bg-white p-6 rounded-2xl border border-indigo-50 shadow-sm hover:shadow-md transition-all group">
+                                <div className="flex justify-between items-start mb-4">
+                                    <div>
+                                        <h4 className="font-black text-gray-800 text-lg leading-tight">{job.company}</h4>
+                                        <p className="text-indigo-600 font-bold text-sm tracking-tight">{job.role}</p>
+                                    </div>
+                                    <span className="text-[10px] font-black text-indigo-400 bg-indigo-50 px-2 py-0.5 rounded uppercase tracking-widest">{job.location}</span>
+                                </div>
+                                <p className="text-gray-500 text-xs italic mb-5 leading-relaxed">"{job.whySuited}"</p>
+                                <div className="flex gap-2 pt-2 border-t border-gray-50">
+                                    <button
+                                        onClick={() => trackDiscoveredJob(job)}
+                                        className="flex-1 py-2 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700 transition shadow-md"
+                                    >
+                                        Track & Prepare
+                                    </button>
+                                    <a
+                                        href={job.jobUrl}
+                                        target="_blank"
+                                        className="w-10 h-10 flex items-center justify-center bg-gray-50 text-gray-400 rounded-lg hover:text-indigo-600 transition border border-gray-100"
+                                    >
+                                        <i className="fas fa-external-link-alt text-xs"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {showAddForm && (
                 <form onSubmit={addJob} className="bg-white p-6 rounded-2xl border border-gray-200 shadow-lg space-y-4">
