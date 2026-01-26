@@ -12,6 +12,13 @@ export const metadata: Metadata = {
     default: 'Aditya Pandey | Full Stack Developer & Software Engineer',
     template: '%s | Aditya Pandey',
   },
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+    interactiveWidget: 'resizes-content', // CRITICAL: Ensures 100dvh reacts to keyboard
+  },
   description: 'Portfolio of Aditya Pandey, a B.Tech CSE student and Full Stack Developer specializing in AI, Web Development, and Software Engineering. Explore projects, skills, and career insights.',
   keywords: [
     'aditya', 'adityapandey', 'pandeyaditya', 'pandeyji', 'pandey',
