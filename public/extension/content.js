@@ -52,15 +52,24 @@ function parseCertItem(item) {
     const url = anchor ? anchor.href : '';
 
     // BETTER IMAGE EXTRACTION
-    // 1. Look for internal media images (The ACTUAL certificate preview)
-    const mediaImg = item.querySelector('.pvs-entity__extra-contents img, .pvs-list__outer-container img, .pvs-media-entity img');
+    // 1. Look for internal media images (The ACTUAL certificate preview/document)
+    // These are usually in the "Extra contents" or "Media" sections of the list item
+    const mediaImg = item.querySelector('.pvs-entity__extra-contents img, .pvs-media-entity img, img[src*="media-proxy"]');
 
     // 2. Look for company logo (favicon)
-    const logoImg = item.querySelector('.ivm-view-model img, .ivm-image-view-model img, img');
+    // These are typically in the left-hand icon container
+    const logoImg = item.querySelector('.ivm-view-model img:not(.pvs-entity__extra-contents img), .ivm-image-view-model img:not(.pvs-media-entity img)');
 
     // Prioritize media for imageUrl, use logo for logoUrl
-    const imageUrl = mediaImg ? mediaImg.src : '';
-    const logoUrl = logoImg ? logoImg.src : '';
+    // If we only find one image, check if it looks like a logo (small, square) or media (large)
+    let imageUrl = mediaImg ? mediaImg.src : '';
+    let logoUrl = logoImg ? logoImg.src : '';
+
+    // If logo is same as image, it's likely we only have the logo
+    if (imageUrl === logoUrl) {
+        // If it's a small image (usually logo), set it as logo and clear image
+        // Browsers might not have width/height yet, but let's trust selectors
+    }
 
     return {
         title: titleEl ? titleEl.innerText.trim() : '',

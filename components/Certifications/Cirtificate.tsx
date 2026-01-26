@@ -51,18 +51,25 @@ export default function Certificate({
 
   const gradientClass = colorMap[finalColor] || 'from-blue-500 to-blue-700'
 
+  const [imgError, setImgError] = useState(false)
+
   return (
     <>
       <div
         className="group relative bg-white rounded-xl shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition duration-300 cursor-pointer"
-        onClick={() => imageUrl && setIsModalOpen(true)}
+        onClick={() => (imageUrl || logoUrl) && setIsModalOpen(true)}
       >
 
         {/* Header Section (Colored/Image) */}
         <div className="relative h-32 overflow-hidden">
-          {imageUrl ? (
+          {imageUrl && !imgError ? (
             <>
-              <img src={imageUrl} alt="" className="w-full h-full object-cover" />
+              <img
+                src={imageUrl}
+                alt=""
+                className="w-full h-full object-cover"
+                onError={() => setImgError(true)}
+              />
               <div className={`absolute inset-0 bg-gradient-to-r ${gradientClass} opacity-80`}></div>
             </>
           ) : (
@@ -156,8 +163,15 @@ export default function Certificate({
                 <i className="fas fa-times text-xl"></i>
               </button>
             </div>
-            <div className="p-1 bg-gray-100 flex-grow overflow-auto flex items-center justify-center">
-              <img src={imageUrl || logoUrl} alt={title} className="max-w-full max-h-[80vh] shadow-lg" />
+            <div className="p-1 bg-gray-100 flex-grow overflow-auto flex items-center justify-center min-h-[400px]">
+              {imageUrl || logoUrl ? (
+                <img src={imageUrl || logoUrl} alt={title} className="max-w-full max-h-[70vh] shadow-lg object-contain" />
+              ) : (
+                <div className="text-gray-400 flex flex-col items-center">
+                  <i className="fas fa-file-invoice text-5xl mb-4"></i>
+                  <p>Certificate preview not available</p>
+                </div>
+              )}
             </div>
             <div className="p-4 border-t flex justify-end gap-3 bg-gray-50">
               <button
