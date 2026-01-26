@@ -13,7 +13,6 @@ export default function SyncManager() {
         codeforcesUsername: '',
         githubUsername: '',
         linkedinUsername: '',
-        linkedinCookie: '',
     })
     useEffect(() => {
         const fetchSettings = async () => {
@@ -146,30 +145,7 @@ export default function SyncManager() {
                     </div>
 
 
-                    <div>
-                        <label className="block text-sm font-medium mb-1">LinkedIn Cookie (li_at) for Sync</label>
-                        {cookieConnected ? (
-                            <div className="flex items-center gap-2 p-2 px-3 border border-green-200 bg-green-50 rounded text-green-700 text-sm">
-                                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                                Connected via Extension
-                                <button
-                                    type="button"
-                                    onClick={() => setCookieConnected(false)}
-                                    className="ml-auto text-xs text-green-800 hover:underline"
-                                >
-                                    Change
-                                </button>
-                            </div>
-                        ) : (
-                            <input
-                                type="password"
-                                className="w-full p-2 border rounded"
-                                placeholder="Enter li_at cookie value"
-                                value={settings.linkedinCookie}
-                                onChange={(e) => setSettings({ ...settings, linkedinCookie: e.target.value })}
-                            />
-                        )}
-                    </div>
+
                     <button disabled={loading} className="md:col-span-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50">
                         Save Settings
                     </button>
@@ -198,7 +174,15 @@ export default function SyncManager() {
                 <div className="md:col-span-2 bg-gradient-to-br from-blue-50 to-white p-8 rounded-xl border border-blue-100 shadow-sm">
                     <div className="flex flex-col md:flex-row gap-8 items-center">
                         <div className="flex-1">
-                            <h2 className="text-2xl font-bold text-blue-900 mb-2">LinkedIn Synchronization</h2>
+                            <div className="flex items-center gap-3 mb-2">
+                                <h2 className="text-2xl font-bold text-blue-900">LinkedIn Synchronization</h2>
+                                {cookieConnected && (
+                                    <span className="flex items-center gap-1.5 px-3 py-1 bg-green-100 text-green-700 text-[10px] font-bold uppercase rounded-full border border-green-200 shadow-sm">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                                        Connected via Extension
+                                    </span>
+                                )}
+                            </div>
                             <p className="text-gray-600 mb-6">
                                 The easiest way to keep your portfolio up-to-date. Sync your experience, education, and skills in seconds using our official Chrome extension.
                             </p>
