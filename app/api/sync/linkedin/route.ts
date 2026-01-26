@@ -192,52 +192,56 @@ async function handleManualImport(data: any) {
         }
     }
 
-    // 2. Process Skills
+    // 2. Process Skills (Categorized)
     if (data.skills && Array.isArray(data.skills)) {
-        // Flatten skills to string for AI optimization/categorization (optional)
-        // Or just save them directly.
-        // Let's pick top 20 and categorize?
-        // For now, let's strictly replace the "Skill" table.
-
         await prisma.skill.deleteMany({});
-
-        // We can pass the whole list to Gemini to get a "Top 15" curated list string
         const skillsString = data.skills.join(', ');
-        let curatedSkills = [];
+
+        let categorizedSkills: Record<string, string[]> = {
+            "Programming": [],
+            "Frontend": [],
+            "Backend": [],
+            "Tools & DevOps": []
+        };
+
         try {
-            // Attempt AI curation
-            const curatedSkillsString = await enhanceContent(skillsString, 'skills');
-            curatedSkills = curatedSkillsString.split(',').map(s => s.trim()).filter(s => s);
+            const aiResponse = await enhanceContent(skillsString, 'skills');
+            const jsonStr = aiResponse.replace(/```json/g, '').replace(/```/g, '').trim();
+            categorizedSkills = JSON.parse(jsonStr);
         } catch (e) {
-            // Fallback to top 15 raw skills if AI fails
-            console.log("DEBUG: AI Curation failed, using raw top 15.");
-            curatedSkills = data.skills.slice(0, 15);
+            console.log("DEBUG: AI Categorization failed, using default grouping.");
+            categorizedSkills["Programming"] = data.skills.slice(0, 5);
         }
 
-        // Ensure "General" category exists
-        const generalCategory = await prisma.skillCategory.upsert({
-            where: { id: 'general-category' }, // Using a fixed ID for simplicity or query by title if strictly unique
-            update: {},
-            create: {
-                id: 'general-category',
-                title: 'General',
-                icon: 'fas fa-code',
-                order: 0
-            }
-        });
+        const categoryIcons: Record<string, string> = {
+            "Programming": "fas fa-code",
+            "Frontend": "fas fa-laptop-code",
+            "Backend": "fas fa-server",
+            "Tools & DevOps": "fas fa-tools"
+        };
 
-        // Use a simpler findFirst approach if the fixed ID isn't guaranteed or valid for your DB setup
-        // But upsert with fixed ID is safest for a singleton "General" category.
-
-        for (const skillName of curatedSkills) {
-            await prisma.skill.create({
-                data: {
-                    name: skillName,
-                    category: { connect: { id: generalCategory.id } }, // Fixed: Connect to relation
-                    level: 5,
+        for (const [title, skills] of Object.entries(categorizedSkills)) {
+            const category = await prisma.skillCategory.upsert({
+                where: { id: title.toLowerCase().replace(/\s+/g, '-') },
+                update: { title },
+                create: {
+                    id: title.toLowerCase().replace(/\s+/g, '-'),
+                    title,
+                    icon: categoryIcons[title] || "fas fa-code",
                     order: 0
                 }
             });
+
+            for (const skillName of skills as string[]) {
+                await prisma.skill.create({
+                    data: {
+                        name: skillName,
+                        level: 85,
+                        category: { connect: { id: category.id } },
+                        order: 0
+                    }
+                });
+            }
         }
     }
 
@@ -296,7 +300,7 @@ async function handleManualImport(data: any) {
                     certificateUrl: cert.url || null,
                     imageUrl: cert.imageUrl || null,
                     tags: [],
-                    isVisible: false, // Default hidden
+                    isVisible: false,
                     order: 0,
                 }
             });

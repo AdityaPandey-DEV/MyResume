@@ -38,9 +38,12 @@ export async function enhanceContent(text: string, type: 'about' | 'experience' 
                 `;
             } else if (type === 'skills') {
                 prompt = `
-                Categorize and clean up the following list of technical skills.
-                Return ONLY a comma-separated list of the top 20 most relevant skills.
-                Keep terms short (e.g., "React" instead of "React.js Framework").
+                Categorize the following technical skills into these 4 EXACT categories: 
+                "Programming", "Frontend", "Backend", "Tools & DevOps".
+                
+                - Return strictly a JSON object: {"Programming": ["Skill1", ...], "Frontend": [...], "Backend": [...], "Tools & DevOps": [...]}
+                - Top 5-6 most relevant skills per category.
+                - Keep skill names short.
                 
                 Original List: "${text}"
                 `;
