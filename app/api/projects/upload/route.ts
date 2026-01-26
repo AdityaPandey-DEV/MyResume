@@ -4,6 +4,8 @@ import { join } from 'path'
 import { existsSync } from 'fs'
 import { revalidatePath } from 'next/cache'
 
+import { put } from '@vercel/blob'
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
@@ -40,6 +42,15 @@ export async function POST(request: NextRequest) {
     const fileExtension = file.name.split('.').pop()
     const fileName = `${timestamp}-${randomString}.${fileExtension}`
 
+    // If Vercel Blob token is present, use it for production-ready storage
+    if (process.env.BLOB_READ_WRITE_TOKEN) {
+      const blob = await put(`projects/${fileName}`, file, {
+        access: 'public',
+      })
+      return NextResponse.json({ imageUrl: blob.url }, { status: 200 })
+    }
+
+    // Fallback to local storage (Development only)
     // Ensure directory exists
     const uploadDir = join(process.cwd(), 'public', 'images', 'projects')
     if (!existsSync(uploadDir)) {
@@ -56,8 +67,8 @@ export async function POST(request: NextRequest) {
 
     // Return the image URL path
     const imageUrl = `/images/projects/${fileName}`
-     revalidatePath('/')
-  revalidatePath('/projects')
+    revalidatePath('/')
+    revalidatePath('/projects')
     return NextResponse.json({ imageUrl }, { status: 200 })
   } catch (error) {
     console.error('Error uploading file:', error)
