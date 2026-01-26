@@ -443,8 +443,9 @@ export default function ProjectsManager() {
                       setValue('description', res.data.description);
                       toast.success('Description generated!', { id: 'gen-desc' });
                     }
-                  } catch (e) {
-                    toast.error('Failed to generate', { id: 'gen-desc' });
+                  } catch (e: any) {
+                    const errorMsg = e.response?.data?.error || 'Failed to generate';
+                    toast.error(errorMsg, { id: 'gen-desc' });
                   }
                 }}
                 className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded hover:bg-purple-200 flex items-center gap-1"
