@@ -87,14 +87,9 @@ async function handleManualImport(data: any) {
             enhancedHeroDesc = data.about ? await enhanceContent(data.about, 'hero-description') : '';
             enhancedAboutSub = data.about ? await enhanceContent(data.about, 'about') : '';
         } catch (e) {
-            console.log("DEBUG: AI Enhancement failed, using truncated raw data.");
-            enhancedHeroDesc = data.about?.substring(0, 160) + '...' || '';
+            console.log("DEBUG: AI Enhancement failed, using full raw data.");
+            enhancedHeroDesc = data.about || '';
             enhancedAboutSub = data.about || '';
-        }
-
-        // Hard limit on Hero Description (Strict limit for UI stability)
-        if (enhancedHeroDesc && enhancedHeroDesc.split(' ').length > 25) {
-            enhancedHeroDesc = enhancedHeroDesc.split(' ').slice(0, 25).join(' ') + '...';
         }
 
         const hero = await prisma.hero.findFirst({});
@@ -104,6 +99,7 @@ async function handleManualImport(data: any) {
             await prisma.hero.update({
                 where: { id: hero.id },
                 data: {
+                    name: data.name || hero.name,
                     title: enhancedTitle || data.headline || `Software Developer | ${data.location || ''}`,
                     description: enhancedHeroDesc || '',
                     ...(data.imageUrl && { imageUrl: data.imageUrl })
