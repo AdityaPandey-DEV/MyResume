@@ -38,9 +38,47 @@ async function seedSkillsFromHtml() {
 
     // Iterate over categories
     for (const [categoryTitle, categoryData] of Object.entries(skillsData)) {
-        if (categoryTitle === 'Soft Skills' || categoryTitle === 'Advanced') continue; // specialized handling if needed, but generic categories work too
-
         const catData = categoryData as any;
+
+        // 1. Handle Advanced Skills (AI/ML & Cloud)
+        if (categoryTitle.includes('AI') || categoryTitle.includes('Intelligence') || categoryTitle.includes('Cloud')) {
+            const categoryType = categoryTitle.includes('Cloud') ? 'cloud' : 'ai';
+            console.log(`   📂 Advanced Category: ${categoryType} (${categoryTitle})`);
+
+            if (catData.skills && Array.isArray(catData.skills)) {
+                for (const skill of catData.skills) {
+                    await prisma.advancedSkill.create({
+                        data: {
+                            category: categoryType,
+                            skill: skill.name,
+                            order: 0
+                        }
+                    });
+                    console.log(`      🔹 Advanced Skill: ${skill.name}`);
+                }
+            }
+            continue;
+        }
+
+        // 2. Handle Soft Skills
+        if (categoryTitle.includes('Soft')) {
+            console.log(`   📂 Soft Skills Category`);
+            if (catData.skills && Array.isArray(catData.skills)) {
+                for (const skill of catData.skills) {
+                    await prisma.softSkill.create({
+                        data: {
+                            title: skill.name,
+                            description: skill.description || "Demonstrated expertise in this area.",
+                            order: 0
+                        }
+                    });
+                    console.log(`      🔹 Soft Skill: ${skill.name}`);
+                }
+            }
+            continue;
+        }
+
+        // 3. Handle Regular Skills (Programming, Frontend, Backend, etc.)
         const icon = catData.icon || 'fas fa-code';
 
         // Check if category exists
