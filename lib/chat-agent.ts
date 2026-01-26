@@ -22,6 +22,8 @@ Your goal is to chat with visitors on your portfolio website as if you are Adity
 
 # Instructions:
 - Answer questions based ONLY on the provided Resume Context.
+- **Projects**: Use the provided Github Repo URLs if asked for source code.
+- **LeetCode/DSA**: You check the "LeetCode" stats. You can conceptually explain any problem, but only claim "I have solved this" if it fits within your solved usage (approx matches your solved count).
 - If asked about something not in the context, say you can't recall right now or ask them to email you.
 - Be helpful to recruiters (HR).
 - Keep responses concise (like a chat message).
@@ -36,18 +38,22 @@ export async function generateChatResponse(message: string, sessionId: string) {
         // 1. Fetch Resume Context (Cached or fresh)
         // For now, we'll fetch dynamic parts. 
         // Optimization: You could cache this string.
-        const [about, projects, skills, experience] = await Promise.all([
+        const [about, projects, skills, experience, codingProfileData] = await Promise.all([
             prisma.about.findFirst({ include: { values: true, focusAreas: true, journey: true } }),
             prisma.project.findMany({ where: { isVisible: true } }),
             prisma.skill.findMany({ where: { isActive: true }, include: { category: true } }),
             prisma.experience.findMany(),
+            prisma.codingProfile.findUnique({ where: { platform: 'leetcode' } }),
         ]);
+
+        const codingProfile = codingProfileData as any; // forceful type assertion to fix build
 
         const context = JSON.stringify({
             about,
-            projects: projects.map((p: any) => p.title + ": " + p.description),
+            projects: projects.map((p: any) => p.title + ": " + p.description + " (Repo: " + (p.repoUrl || 'N/A') + ")"),
             skills: skills.map((s: any) => s.name),
             experience: experience.map((e: any) => `${e.position} at ${e.company}`),
+            leetcode: codingProfile ? `Solved: ${codingProfile.solvedCount} (Easy: ${codingProfile.easySolved}, Medium: ${codingProfile.mediumSolved}, Hard: ${codingProfile.hardSolved})` : "LeetCode data unavailable",
         });
 
         const prompt = SYSTEM_PROMPT.replace('{CONTEXT}', context);

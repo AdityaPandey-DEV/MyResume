@@ -130,7 +130,7 @@ export default function HeroClient({ hero }: HeroProps) {
           </div>
         </div>
       </div>
-      <WhatsAppWidget /> {/* Rendered WhatsAppWidget */}
+      <WhatsAppWidget avatarUrl={hero.imageUrl} /> {/* Rendered WhatsAppWidget */}
     </div>
   )
 }

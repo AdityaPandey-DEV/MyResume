@@ -11,7 +11,11 @@ interface Message {
     content: string;
 }
 
-export default function WhatsAppWidget() {
+interface WhatsAppWidgetProps {
+    avatarUrl?: string;
+}
+
+export default function WhatsAppWidget({ avatarUrl }: WhatsAppWidgetProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<Message[]>([
         { role: 'assistant', content: "Hey! I'm Aditya's AI assistant. Ask me anything about his projects, skills, or experience! 👋" }
@@ -93,7 +97,7 @@ export default function WhatsAppWidget() {
                                 <div className="relative">
                                     {/* Avatar */}
                                     <div className="w-10 h-10 rounded-full bg-gray-300 overflow-hidden border border-white/20">
-                                        <img src="/me.png" alt="Aditya" className="w-full h-full object-cover" onError={(e) => e.currentTarget.src = 'https://github.com/shadcn.png'} />
+                                        <img src={avatarUrl || "/me.png"} alt="Aditya" className="w-full h-full object-cover" onError={(e) => e.currentTarget.src = 'https://github.com/shadcn.png'} />
                                     </div>
                                     <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-[#008069]"></div>
                                 </div>
@@ -103,8 +107,8 @@ export default function WhatsAppWidget() {
                                 </div>
                             </div>
                             <div className="flex gap-4 text-white/80 shrink-0">
-                                <Video size={22} className="cursor-pointer hover:text-white" />
-                                <Phone size={20} className="cursor-pointer hover:text-white" />
+                                <Video size={22} className="cursor-pointer hover:text-white" onClick={() => toast("Aditya is busy coding! Let's chat here instead. 💻", { icon: '👨‍💻' })} />
+                                <Phone size={20} className="cursor-pointer hover:text-white" onClick={() => toast("Can't take calls right now. Text me! 📱", { icon: '📴' })} />
                                 <button onClick={() => setIsOpen(false)} className="hidden md:block hover:text-white">
                                     <X size={22} />
                                 </button>
@@ -170,7 +174,7 @@ export default function WhatsAppWidget() {
                                 onChange={(e) => setInputText(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
                                 placeholder="Type a message"
-                                className="flex-1 bg-white rounded-lg px-4 py-2 text-sm focus:outline-none border-none placeholder-gray-500"
+                                className="flex-1 bg-white rounded-lg px-4 py-2 text-sm text-black focus:outline-none border-none placeholder-gray-500"
                             />
 
                             {inputText.trim() ? (
