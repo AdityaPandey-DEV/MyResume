@@ -35,3 +35,47 @@ export async function fetchGithubReadme(repoUrl: string): Promise<string | null>
         return null;
     }
 }
+
+export async function fetchRepoFileTree(repoUrl: string): Promise<string[]> {
+    try {
+        const match = repoUrl.match(/github\.com\/([^\/]+)\/([^\/]+)/);
+        if (!match) return [];
+
+        const owner = match[1];
+        const repo = match[2].replace('.git', '');
+        const token = process.env.GITHUB_TOKEN;
+
+        const headers: HeadersInit = {
+            'Accept': 'application/vnd.github.v3+json',
+        };
+
+        if (token) {
+            headers['Authorization'] = `token ${token}`;
+        }
+
+        // Get default branch SHA
+        const repoInfo = await fetch(`https://api.github.com/repos/${owner}/${repo}`, { headers }).then(res => res.json());
+        const defaultBranch = repoInfo.default_branch || 'main';
+
+        // Get Tree Recursively
+        const treeUrl = `https://api.github.com/repos/${owner}/${repo}/git/trees/${defaultBranch}?recursive=1`;
+        const response = await fetch(treeUrl, { headers });
+
+        if (!response.ok) return [];
+
+        const data = await response.json();
+        if (!data.tree) return [];
+
+        // Filter and format: Limit to top 500 files to allow broad search, avoid node_modules, .git etc.
+        const files = data.tree
+            .filter((item: any) => item.type === 'blob' || item.type === 'tree')
+            .filter((item: any) => !item.path.includes('node_modules') && !item.path.includes('.git') && !item.path.startsWith('dist/') && !item.path.startsWith('build/') && !item.path.includes('package-lock.json'))
+            .map((item: any) => item.path);
+
+        return files; // Return array of paths
+
+    } catch (error) {
+        console.error('Error fetching File Tree:', error);
+        return [];
+    }
+}
