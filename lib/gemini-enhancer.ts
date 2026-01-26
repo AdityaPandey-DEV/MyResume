@@ -50,7 +50,8 @@ export async function enhanceContent(text: string, type: 'about' | 'experience' 
             } else if (type as any === 'hero-title') {
                 prompt = `
                 Generate a professional software developer headline (Hero Title).
-                - Keep it under 8 words.
+                - Keep it STRICTLY under 8 words.
+                - Return ONLY the raw string. No quotes, no intro, no "Option 1", no numbered lists.
                 - Use symbols like | or & if needed.
                 - Example: "B.Tech CSE Student & Full Stack Developer"
                 
@@ -59,7 +60,8 @@ export async function enhanceContent(text: string, type: 'about' | 'experience' 
             } else if (type as any === 'hero-description') {
                 prompt = `
                 Generate a catchy 1-sentence bio (Hero Description).
-                - Keep it under 25 words.
+                - Keep it STRICTLY under 25 words.
+                - Return ONLY the raw string. No quotes, no intro.
                 - Focus on passion and technology.
                 
                 Original Bio: "${text}"

@@ -60,8 +60,14 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ imageUrl }, { status: 200 })
     } catch (error) {
         console.error('Error uploading file:', error)
+
+        // Provide specific advice for Vercel
+        const message = process.env.VERCEL
+            ? 'Vercel filesystem is read-only. Please use a direct Image URL instead, or set up Vercel Blob storage.'
+            : 'Failed to upload file. Check folder permissions.';
+
         return NextResponse.json(
-            { error: 'Failed to upload file' },
+            { error: message },
             { status: 500 }
         )
     }
