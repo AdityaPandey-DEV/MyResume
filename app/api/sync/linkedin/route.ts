@@ -337,18 +337,61 @@ async function handleManualImport(data: any) {
     // 5. Update Certifications
     if (data.certifications && Array.isArray(data.certifications)) {
         await prisma.certification.deleteMany({});
-        for (const cert of data.certifications) {
+
+        const vibrantColors = ['blue', 'indigo', 'purple', 'pink', 'rose', 'orange', 'emerald', 'cyan'];
+        const iconMap: Record<string, string> = {
+            'ai': 'fa-brain',
+            'machine learning': 'fa-brain',
+            'python': 'fa-brands fa-python',
+            'javascript': 'fa-brands fa-js',
+            'react': 'fa-brands fa-react',
+            'google': 'fa-brands fa-google',
+            'cloud': 'fa-cloud',
+            'security': 'fa-shield-halved',
+            'hacking': 'fa-user-secret',
+            'english': 'fa-language',
+            'communication': 'fa-comments',
+            'development': 'fa-code',
+            'frontend': 'fa-laptop-code',
+            'backend': 'fa-server',
+            'full stack': 'fa-layer-group',
+            'meta': 'fa-meta', // custom handling
+            'ibm': 'fa-building',
+        };
+
+        for (let i = 0; i < data.certifications.length; i++) {
+            const cert = data.certifications[i];
+            const titleLower = cert.title?.toLowerCase() || '';
+            const orgLower = cert.organization?.toLowerCase() || '';
+
+            // Pick color based on index for variety
+            const color = vibrantColors[i % vibrantColors.length];
+
+            // Find best matching icon
+            let icon = 'fa-certificate';
+            for (const [key, value] of Object.entries(iconMap)) {
+                if (titleLower.includes(key) || orgLower.includes(key)) {
+                    icon = value;
+                    break;
+                }
+            }
+            if (orgLower.includes('google')) icon = 'fa-brands fa-google';
+            if (orgLower.includes('meta')) icon = 'fa-brands fa-facebook-f'; // Meta uses fa-facebook-f or custom
+            if (orgLower.includes('ibm')) icon = 'fa-id-card';
+
             await prisma.certification.create({
                 data: {
                     title: cert.title || 'Unknown Certification',
                     organization: cert.organization || 'Unknown Organization',
                     date: cert.date || '',
-                    description: '',
+                    description: cert.description || '',
                     certificateUrl: cert.url || null,
                     imageUrl: cert.imageUrl || null,
-                    tags: [],
-                    isVisible: false,
-                    order: 0,
+                    tags: cert.tags || [],
+                    icon: icon,
+                    color: color,
+                    isVisible: true, // Show synced certifications by default
+                    order: i,
                 }
             });
         }

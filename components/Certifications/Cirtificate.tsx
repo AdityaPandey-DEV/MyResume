@@ -35,10 +35,10 @@ export default function Certificate({
 
         {/* Content Layer */}
         <div className="relative z-10 bg-white h-full flex flex-col">
-          <div className={`bg-${color}-600 p-5 flex items-center justify-between`}>
-            <h3 className="text-lg font-bold text-white line-clamp-2">{title}</h3>
-            <div className="bg-white text-blue-600 w-10 h-10 shrink-0 rounded-full flex items-center justify-center">
-              <i className={icon}></i>
+          <div className={`bg-gradient-to-r from-${color}-500 to-${color}-700 p-6 flex items-center justify-between`}>
+            <h3 className="text-xl font-bold text-white line-clamp-2 leading-tight">{title}</h3>
+            <div className="bg-white/20 backdrop-blur-md text-white w-12 h-12 shrink-0 rounded-xl border border-white/30 flex items-center justify-center shadow-inner">
+              <i className={`fa-solid ${icon} text-xl`}></i>
             </div>
           </div>
           <div className="p-6 flex-grow">
