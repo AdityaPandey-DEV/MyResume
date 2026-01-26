@@ -37,12 +37,12 @@ export async function enhanceContent(text: string, type: 'about' | 'experience' 
     // 2. Try Groq (Llama 3.1 70B) - Much faster and higher free limits
     if (groq) {
         try {
-            console.log(`[AI] Attempting Groq for ${type}...`);
+            const isJsonType = (type === 'skills' || type === 'holistic-analysis' || type === 'career-suggestions' || type === 'job-outreach');
             const chatCompletion = await groq.chat.completions.create({
-                messages: [{ role: "user", content: prompt + "\nReturn ONLY the requested format (raw text or JSON block), no conversational filler." }],
+                messages: [{ role: "user", content: prompt + (isJsonType ? "\nReturn ONLY the requested format (raw text or JSON block), no conversational filler." : "") }],
                 model: "llama-3.3-70b-versatile",
                 temperature: 0.5,
-                response_format: (type === 'skills' || type === 'holistic-analysis' || type === 'career-suggestions' || type === 'job-outreach') ? { type: "json_object" } : undefined,
+                response_format: isJsonType ? { type: "json_object" } : undefined,
             });
 
             let result = chatCompletion.choices[0]?.message?.content?.trim() || "";
