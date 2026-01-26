@@ -21,6 +21,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         signIn: '/admin/login',
     },
     callbacks: {
+        async signIn({ user }: any) {
+            const adminEmail = process.env.ADMIN_EMAIL;
+            if (user?.email && adminEmail && user.email === adminEmail) {
+                return true;
+            }
+            return false; // Deny access for everyone else
+        },
         async jwt({ token, user }: any) {
             if (user) token.id = user.id
             return token
