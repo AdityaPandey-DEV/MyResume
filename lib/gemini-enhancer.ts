@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-export async function enhanceContent(text: string, type: 'about' | 'experience' | 'skills'): Promise<string> {
+export async function enhanceContent(text: string, type: 'about' | 'experience' | 'skills' | 'projects' | 'hero-title' | 'hero-description'): Promise<string> {
     if (!process.env.GEMINI_API_KEY) {
         console.warn("GEMINI_API_KEY is missing. Returning original text.");
         return text;
@@ -20,25 +20,54 @@ export async function enhanceContent(text: string, type: 'about' | 'experience' 
             if (type === 'about') {
                 prompt = `
                 You are an expert SEO copywriter for developer resumes.
-                Rewrite the following "About Me" section to be professional, engaging, and SEO-optimized for a software engineer.
-                Keep it under 600 characters. Use the first person ("I").
+                Rewrite the following "About Me" journey section.
+                - Keep it professional and engaging.
+                - Return EXACTLY 3 short paragraphs.
+                - Each paragraph must be under 50 words.
+                - Use the first person ("I").
                 
                 Original Text: "${text}"
                 `;
             } else if (type === 'experience') {
                 prompt = `
-                Rewrite the following job description to use strong action verbs and highlight technical achievements.
-                Keep it concise.
+                Rewrite the following job description to use strong action verbs.
+                - Keep it under 40 words.
+                - Highlight technical impact and quantifiable results.
                 
                 Original Text: "${text}"
                 `;
             } else if (type === 'skills') {
                 prompt = `
                 Categorize and clean up the following list of technical skills.
-                Return ONLY a comma-separated list of the top 20 most relevant/modern skills for a Full Stack Developer.
-                Remove duplicates and vague terms.
+                Return ONLY a comma-separated list of the top 20 most relevant skills.
+                Keep terms short (e.g., "React" instead of "React.js Framework").
                 
                 Original List: "${text}"
+                `;
+            } else if (type as any === 'hero-title') {
+                prompt = `
+                Generate a professional software developer headline (Hero Title).
+                - Keep it under 8 words.
+                - Use symbols like | or & if needed.
+                - Example: "B.Tech CSE Student & Full Stack Developer"
+                
+                Original Headline: "${text}"
+                `;
+            } else if (type as any === 'hero-description') {
+                prompt = `
+                Generate a catchy 1-sentence bio (Hero Description).
+                - Keep it under 25 words.
+                - Focus on passion and technology.
+                
+                Original Bio: "${text}"
+                `;
+            } else if (type as any === 'projects') {
+                prompt = `
+                Generate a concise summary for this project.
+                - Keep it under 30 words.
+                - Focus on what the project DOES and the IMPACT.
+                
+                Original Description: "${text}"
                 `;
             }
 

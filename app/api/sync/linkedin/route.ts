@@ -74,12 +74,17 @@ async function handleManualImport(data: any) {
     // 1. Optimize "About" / "Hero"
     if (data.name) {
         console.log("DEBUG: Processing Hero for", data.name);
-        let enhancedAbout = '';
+
+        let enhancedTitle = data.headline || '';
+        let enhancedHeroDesc = data.about || '';
+        let enhancedAboutSub = data.about || '';
+
         try {
-            enhancedAbout = data.about ? await enhanceContent(data.about, 'about') : '';
+            enhancedTitle = data.headline ? await enhanceContent(data.headline, 'hero-title') : data.headline;
+            enhancedHeroDesc = data.about ? await enhanceContent(data.about, 'hero-description') : '';
+            enhancedAboutSub = data.about ? await enhanceContent(data.about, 'about') : '';
         } catch (e) {
-            console.log("DEBUG: AI About Enhancement failed, using raw About.");
-            enhancedAbout = data.about || '';
+            console.log("DEBUG: AI Enhancement failed, using raw data.");
         }
 
         const hero = await prisma.hero.findFirst({});
@@ -89,9 +94,8 @@ async function handleManualImport(data: any) {
             await prisma.hero.update({
                 where: { id: hero.id },
                 data: {
-                    title: data.headline || `Software Developer | ${data.location || ''}`,
-                    // subtitle: data.location || '', // REMOVED: Field does not exist in schema
-                    description: enhancedAbout || data.about || '',
+                    title: enhancedTitle || data.headline || `Software Developer | ${data.location || ''}`,
+                    description: enhancedHeroDesc || data.about?.substring(0, 150) || '',
                     ...(data.imageUrl && { imageUrl: data.imageUrl })
                 }
             });
@@ -99,32 +103,92 @@ async function handleManualImport(data: any) {
             console.log("DEBUG: Creating NEW Hero...");
             await prisma.hero.create({
                 data: {
-                    name: data.name, // Fixed: Was missing
-                    title: data.headline || `Software Developer | ${data.location || ''}`,
-                    // subtitle: data.location || 'Remote', // REMOVED: Field does not exist in schema
-                    description: enhancedAbout || data.about || '',
-                    imageUrl: data.imageUrl || '/profile.png', // Default
+                    name: data.name,
+                    title: enhancedTitle || data.headline || `Software Developer | ${data.location || ''}`,
+                    description: enhancedHeroDesc || data.about?.substring(0, 150) || '',
+                    imageUrl: data.imageUrl || '/profile.png',
                 }
             });
         }
 
-        // Also update the dedicated "About" model if it exists
-        const aboutModel = await prisma.about.findFirst({});
+        // Update About Section
+        const aboutModel = await prisma.about.findFirst({
+            include: { journey: true }
+        });
+
+        const aboutData = {
+            heading: "About Me",
+            subHeading: "Passionate developer with a focus on creating impactful solutions and continuous learning"
+        };
+
+        let currentAbout;
         if (aboutModel) {
-            await prisma.about.update({
+            currentAbout = await prisma.about.update({
                 where: { id: aboutModel.id },
-                data: {
-                    heading: "About Me", // Ensure heading exists
-                    subHeading: enhancedAbout || data.about || '', // Fixed: Mapped to subHeading
-                }
+                data: aboutData
             });
         } else {
-            await prisma.about.create({
+            currentAbout = await prisma.about.create({
+                data: aboutData
+            });
+        }
+
+        // Update Journey (3 paragraphs)
+        const journeyParas = enhancedAboutSub.split('\n\n').filter((p: string) => p.trim());
+        const journey = await prisma.journey.upsert({
+            where: { aboutId: currentAbout.id },
+            update: { title: "My Journey" },
+            create: {
+                aboutId: currentAbout.id,
+                title: "My Journey"
+            }
+        });
+
+        await prisma.journeyParagraph.deleteMany({ where: { journeyId: journey.id } });
+        for (let i = 0; i < Math.min(journeyParas.length, 3); i++) {
+            await prisma.journeyParagraph.create({
                 data: {
-                    heading: "About Me",
-                    subHeading: enhancedAbout || data.about || '',
+                    journeyId: journey.id,
+                    content: journeyParas[i],
+                    order: i
                 }
             });
+        }
+
+        // Add default Focus Areas if empty
+        const countFocus = await prisma.focusArea.count({ where: { aboutId: currentAbout.id } });
+        if (countFocus === 0) {
+            const defaults = [
+                { title: "Full Stack Web Development", description: "Creating responsive, intuitive interfaces and robust backend systems.", icon: "desktop" },
+                { title: "AI & Machine Learning", description: "Exploring artificial intelligence and machine learning applications.", icon: "brain" },
+                { title: "Competitive Programming", description: "Sharpening problem-solving skills through algorithmic challenges.", icon: "code" }
+            ];
+            for (let i = 0; i < defaults.length; i++) {
+                await prisma.focusArea.create({
+                    data: {
+                        aboutId: currentAbout.id,
+                        title: defaults[i].title,
+                        description: defaults[i].description,
+                        icon: defaults[i].icon,
+                        order: i
+                    }
+                });
+            }
+        }
+
+        // Add default Personal Values if empty
+        const countValues = await prisma.personalValue.count({ where: { aboutId: currentAbout.id } });
+        if (countValues === 0) {
+            const defaultValues = ["Curiosity", "Innovation", "Problem Solving", "Adaptability", "Continuous Learning"];
+            for (let i = 0; i < defaultValues.length; i++) {
+                await prisma.personalValue.create({
+                    data: {
+                        aboutId: currentAbout.id,
+                        value: defaultValues[i],
+                        order: i
+                    }
+                });
+            }
         }
     }
 
@@ -181,15 +245,21 @@ async function handleManualImport(data: any) {
     if (data.experience && Array.isArray(data.experience)) {
         await prisma.experience.deleteMany({});
         for (const exp of data.experience) {
-            // Optional: Enhance experience description too?
-            // const enhancedDesc = await enhanceContent(exp.description, 'experience');
+            let enhancedDesc = exp.description || '';
+            try {
+                if (exp.description) {
+                    enhancedDesc = await enhanceContent(exp.description, 'experience');
+                }
+            } catch (e) {
+                console.warn("DEBUG: Experience AI enhancement failed.");
+            }
 
             await prisma.experience.create({
                 data: {
                     position: exp.position || 'Unknown Role',
                     company: exp.company || 'Unknown Company',
                     duration: exp.duration || '',
-                    description: exp.description || '', // Keeping original for accuracy, or use enhancedDesc
+                    description: enhancedDesc,
                     location: exp.location || '',
                     order: 0,
                 }

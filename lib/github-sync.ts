@@ -1,7 +1,7 @@
 
 import { prisma } from '@/lib/prisma';
 // Dynamic imports for these to avoid circular deps or build issues if any, though standard import is fine here
-import { generateEnhancedDescription } from '@/lib/gemini';
+import { enhanceContent } from '@/lib/gemini-enhancer';
 import { getOgImage, getScreenshotUrl } from '@/lib/meta-helper';
 
 export async function syncProjectFromGithub(projectId: string, repoUrl: string) {
@@ -41,7 +41,7 @@ export async function syncProjectFromGithub(projectId: string, repoUrl: string) 
 
         // Generate Description using Gemini
         // We pass the existing description or the one from GitHub
-        const enhancedDescription = await generateEnhancedDescription(data.description || '', '');
+        const enhancedDescription = await enhanceContent(data.description || '', 'projects');
         const finalDescription = enhancedDescription || data.description || "No description provided.";
 
         // Update Project in DB
