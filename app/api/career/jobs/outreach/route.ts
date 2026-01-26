@@ -33,7 +33,7 @@ export async function POST(req: Request) {
 
         // 2. Generate Outreach
         const outreachRaw = await enhanceContent(JSON.stringify(context), 'job-outreach');
-        const outreach = JSON.parse(outreachRaw.replace(/```json/g, '').replace(/```/g, ''));
+        const outreach = JSON.parse(outreachRaw);
 
         // 3. Update Job
         const updatedJob = await prisma.targetJob.update({

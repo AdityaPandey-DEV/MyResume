@@ -29,7 +29,7 @@ export async function GET() {
 
         // 2. Perform Holistic Analysis
         const analysisRaw = await enhanceContent(contextString, 'holistic-analysis');
-        const analysis = JSON.parse(analysisRaw.replace(/```json/g, '').replace(/```/g, ''));
+        const analysis = JSON.parse(analysisRaw);
 
         // Save Analysis
         await prisma.userAnalysis.deleteMany({}); // Keep only latest
@@ -45,7 +45,7 @@ export async function GET() {
 
         // 3. Generate Career Suggestions
         const suggestionsRaw = await enhanceContent(JSON.stringify(analysis), 'career-suggestions');
-        const suggestions = JSON.parse(suggestionsRaw.replace(/```json/g, '').replace(/```/g, ''));
+        const suggestions = JSON.parse(suggestionsRaw);
 
         // Save Suggestions
         await prisma.careerSuggestion.deleteMany({});

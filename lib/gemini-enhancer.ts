@@ -161,6 +161,14 @@ export async function enhanceContent(text: string, type: 'about' | 'experience' 
             const response = await result.response;
             let enhanced = response.text().trim();
 
+            // More robust JSON extraction for structured types
+            if (type === 'skills' || type === 'holistic-analysis' || type === 'career-suggestions' || type === 'job-outreach') {
+                const jsonMatch = enhanced.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
+                if (jsonMatch) {
+                    enhanced = jsonMatch[0];
+                }
+            }
+
             // Remove markdown formatting if any (like ** or *)
             enhanced = enhanced.replace(/\*\*/g, '').replace(/\*/g, '');
 
