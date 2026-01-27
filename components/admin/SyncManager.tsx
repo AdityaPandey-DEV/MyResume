@@ -12,6 +12,7 @@ export default function SyncManager() {
         leetcodeUsername: '',
         codeforcesUsername: '',
         githubUsername: '',
+        githubToken: '',
         linkedinUsername: '',
     })
     useEffect(() => {
@@ -25,6 +26,7 @@ export default function SyncManager() {
                         leetcodeUsername: data.leetcodeUsername || '',
                         codeforcesUsername: data.codeforcesUsername || '',
                         githubUsername: data.githubUsername || '',
+                        githubToken: data.githubToken || '',
                         linkedinUsername: data.linkedinUsername || '',
                     }));
                     if (data.linkedinCookieConfigured) {
@@ -134,6 +136,33 @@ export default function SyncManager() {
                             value={settings.githubUsername}
                             onChange={(e) => setSettings({ ...settings, githubUsername: e.target.value })}
                         />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-1">
+                            GitHub Personal Access Token
+                            <span className="ml-2 text-xs text-gray-400 font-normal">(Required for Deep Search)</span>
+                        </label>
+                        <div className="flex gap-2">
+                            <input
+                                type="password"
+                                className="flex-1 p-2 border rounded"
+                                placeholder={settings.githubToken ? '••••••••' : 'ghp_...'}
+                                value={settings.githubToken}
+                                onChange={(e) => setSettings({ ...settings, githubToken: e.target.value })}
+                            />
+                            <a
+                                href="https://github.com/settings/tokens/new?scopes=repo,read:user,user:email&description=Portfolio+Sync+Agent"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-3 py-2 bg-gray-100 border rounded hover:bg-gray-200 text-sm flex items-center whitespace-nowrap"
+                                title="Get Token from GitHub"
+                            >
+                                Get Token 🔑
+                            </a>
+                        </div>
+                        <p className="text-[10px] text-gray-500 mt-1">
+                            We need this to scan your repositories (Deep Search). We cannot use your password as GitHub deprecated it in 2021.
+                        </p>
                     </div>
                     <div>
                         <label className="block text-sm font-medium mb-1">LinkedIn Username</label>

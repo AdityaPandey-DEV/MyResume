@@ -33,6 +33,7 @@ export async function GET() {
             leetcodeUsername: getVal('LEETCODE_USERNAME'),
             codeforcesUsername: getVal('CODEFORCES_USERNAME'),
             githubUsername: getVal('GITHUB_USERNAME'),
+            githubToken: getVal('GITHUB_TOKEN') ? '•'.repeat(20) + getVal('GITHUB_TOKEN').slice(-4) : '', // Masked for security
             linkedinUsername: getVal('LINKEDIN_USERNAME'),
             // Do NOT send the full cookie back to client for security, just boolean or masked
             linkedinCookieConfigured: !!getVal('LINKEDIN_COOKIE'),
@@ -67,6 +68,7 @@ export async function POST(req: Request) {
         if (leetcodeUsername) await upsertSetting('LEETCODE_USERNAME', leetcodeUsername);
         if (codeforcesUsername) await upsertSetting('CODEFORCES_USERNAME', codeforcesUsername);
         if (githubUsername) await upsertSetting('GITHUB_USERNAME', githubUsername);
+        if (body.githubToken) await upsertSetting('GITHUB_TOKEN', body.githubToken);
         if (linkedinUsername) await upsertSetting('LINKEDIN_USERNAME', linkedinUsername);
         if (linkedinCookie) await upsertSetting('LINKEDIN_COOKIE', linkedinCookie);
 

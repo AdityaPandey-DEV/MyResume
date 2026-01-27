@@ -1,4 +1,17 @@
 
+import { prisma } from './prisma';
+
+async function getGitHubToken(): Promise<string> {
+    if (process.env.GITHUB_TOKEN) return process.env.GITHUB_TOKEN;
+    try {
+        const setting = await prisma.adminSettings.findUnique({ where: { key: 'GITHUB_TOKEN' } });
+        return setting?.value || '';
+    } catch (e) {
+        // Safe to ignore if DB fails, just return empty
+        return '';
+    }
+}
+
 export async function fetchGithubReadme(repoUrl: string): Promise<string | null> {
     try {
         const match = repoUrl.match(/github\.com\/([^\/]+)\/([^\/]+)/);
@@ -6,7 +19,7 @@ export async function fetchGithubReadme(repoUrl: string): Promise<string | null>
 
         const owner = match[1];
         const repo = match[2].replace('.git', '');
-        const token = process.env.GITHUB_TOKEN;
+        const token = await getGitHubToken();
 
         const headers: HeadersInit = {
             'Accept': 'application/vnd.github.v3.raw', // Request raw content
@@ -21,7 +34,8 @@ export async function fetchGithubReadme(repoUrl: string): Promise<string | null>
 
         for (const branch of branches) {
             const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/readme`, {
-                headers
+                headers,
+                cache: 'no-store'
             });
 
             if (response.ok) {
@@ -43,7 +57,7 @@ export async function fetchRepoFileTree(repoUrl: string): Promise<string[]> {
 
         const owner = match[1];
         const repo = match[2].replace('.git', '');
-        const token = process.env.GITHUB_TOKEN;
+        const token = await getGitHubToken();
 
         const headers: HeadersInit = {
             'Accept': 'application/vnd.github.v3+json',
@@ -56,7 +70,7 @@ export async function fetchRepoFileTree(repoUrl: string): Promise<string[]> {
         // Get default branch SHA
         let defaultBranch = 'main';
         try {
-            const repoRes = await fetch(`https://api.github.com/repos/${owner}/${repo}`, { headers });
+            const repoRes = await fetch(`https://api.github.com/repos/${owner}/${repo}`, { headers, cache: 'no-store' });
             if (repoRes.ok) {
                 const repoInfo = await repoRes.json();
                 defaultBranch = repoInfo.default_branch || 'main';
@@ -70,13 +84,13 @@ export async function fetchRepoFileTree(repoUrl: string): Promise<string[]> {
 
         // Get Tree Recursively - Attempt 1 (Detected/Default Branch)
         let treeUrl = `https://api.github.com/repos/${owner}/${repo}/git/trees/${defaultBranch}?recursive=1`;
-        let response = await fetch(treeUrl, { headers });
+        let response = await fetch(treeUrl, { headers, cache: 'no-store' });
 
         // Fallback: If 'main' failed (404), try 'master'
         if (!response.ok && defaultBranch === 'main') {
             console.log("Main branch failed, trying master...");
             treeUrl = `https://api.github.com/repos/${owner}/${repo}/git/trees/master?recursive=1`;
-            response = await fetch(treeUrl, { headers });
+            response = await fetch(treeUrl, { headers, cache: 'no-store' });
         }
 
         if (!response.ok) {
