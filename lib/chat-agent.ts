@@ -99,11 +99,12 @@ export async function generateChatResponse(message: string, sessionId: string) {
             if (validResults.length > 0) {
                 // DIRECT RETURN
                 const output = validResults.map(r => {
-                    const displayFiles = r!.files.slice(0, 8).map(f => {
+                    // Return up to 50 files so frontend can handle "Read More"
+                    const displayFiles = r!.files.slice(0, 50).map(f => {
                         const encodedPath = f.split('/').map(part => encodeURIComponent(part)).join('/');
                         return `- [${f.split('/').pop()}](${r!.project.repoUrl}/blob/main/${encodedPath})`;
                     }).join('\n');
-                    const more = r!.files.length > 8 ? `\n...and ${r!.files.length - 8} more.` : '';
+                    const more = r!.files.length > 50 ? `\n...and ${r!.files.length - 50} more.` : '';
                     return `**${r!.project.title}** (${r!.files.length} matches):\n${displayFiles}${more}`;
                 }).join('\n\n');
 

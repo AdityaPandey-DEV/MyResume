@@ -17,6 +17,54 @@ interface WhatsAppWidgetProps {
     avatarUrl?: string;
 }
 
+// Sub-component for individual messages to handle own state
+const MessageItem = ({ msg }: { msg: Message }) => {
+    const [expanded, setExpanded] = useState(false);
+    const CHAR_LIMIT = 400; // Adjusted limit
+    const isLong = msg.content.length > CHAR_LIMIT;
+
+    const displayContent = (!expanded && isLong) ? msg.content.slice(0, CHAR_LIMIT) + '...' : msg.content;
+
+    return (
+        <div className={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            <div
+                className={`
+                      max-w-[85%] rounded-lg px-3 py-2 text-[14px] shadow-sm relative
+                      ${msg.role === 'user' ? 'bg-[#D9FDD3] rounded-tr-none' : 'bg-white rounded-tl-none'}
+                    `}
+            >
+                <div className="text-gray-800 leading-relaxed markdown-content break-words">
+                    <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                            a: ({ node, ...props }) => <a {...props} target="_blank" rel="noopener noreferrer" className="text-[#027eb5] hover:underline break-all" />,
+                            ul: ({ node, ...props }) => <ul {...props} className="list-disc ml-4 my-1" />,
+                            ol: ({ node, ...props }) => <ol {...props} className="list-decimal ml-4 my-1" />,
+                            li: ({ node, ...props }) => <li {...props} className="my-0.5" />,
+                            p: ({ node, ...props }) => <p {...props} className="mb-1 last:mb-0" />
+                        }}
+                    >
+                        {displayContent}
+                    </ReactMarkdown>
+
+                    {!expanded && isLong && (
+                        <button
+                            onClick={() => setExpanded(true)}
+                            className="text-[#007bfc] text-[13px] font-medium mt-1 hover:underline ml-1 block"
+                        >
+                            Read more
+                        </button>
+                    )}
+                </div>
+                <span className="text-[10px] text-gray-500 float-right mt-1 ml-2 flex items-center gap-1">
+                    {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {msg.role === 'user' && <span className="text-blue-500">✓✓</span>}
+                </span>
+            </div>
+        </div>
+    );
+};
+
 export default function WhatsAppWidget({ avatarUrl }: WhatsAppWidgetProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<Message[]>([
@@ -138,35 +186,7 @@ export default function WhatsAppWidget({ avatarUrl }: WhatsAppWidgetProps) {
                             </div>
 
                             {messages.map((msg, idx) => (
-                                <div
-                                    key={idx}
-                                    className={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                                >
-                                    <div
-                                        className={`
-                      max-w-[80%] rounded-lg px-3 py-2 text-[14px] shadow-sm relative
-                      ${msg.role === 'user' ? 'bg-[#D9FDD3] rounded-tr-none' : 'bg-white rounded-tl-none'}
-                    `}
-                                    >
-                                        <div className="text-gray-800 leading-relaxed markdown-content">
-                                            <ReactMarkdown
-                                                remarkPlugins={[remarkGfm]}
-                                                components={{
-                                                    a: ({ node, ...props }) => <a {...props} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline break-all" />,
-                                                    ul: ({ node, ...props }) => <ul {...props} className="list-disc ml-4 my-1" />,
-                                                    ol: ({ node, ...props }) => <ol {...props} className="list-decimal ml-4 my-1" />,
-                                                    li: ({ node, ...props }) => <li {...props} className="my-0.5" />,
-                                                }}
-                                            >
-                                                {msg.content}
-                                            </ReactMarkdown>
-                                        </div>
-                                        <span className="text-[10px] text-gray-500 float-right mt-1 ml-2 flex items-center gap-1">
-                                            {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                            {msg.role === 'user' && <span className="text-blue-500">✓✓</span>}
-                                        </span>
-                                    </div>
-                                </div>
+                                <MessageItem key={idx} msg={msg} />
                             ))}
 
                             {isLoading && (
