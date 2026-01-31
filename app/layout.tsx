@@ -40,6 +40,9 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
+  alternates: {
+    canonical: 'https://adityapandeydev.vercel.app',
+  },
   openGraph: {
     type: 'website',
     locale: 'en_US',
@@ -52,8 +55,8 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Aditya Pandey | Full Stack Developer',
     description: 'Explore the portfolio of Aditya Pandey, utilizing AI and modern web tech.',
-    creator: '@adityapandey', // Replace if specific handle known, otherwise generic or remove
-    images: ['/og-image.png'],
+    creator: '@adityapandey',
+    images: ['/opengraph-image'], // Point to dynamic image
   },
   verification: {
     google: 'UR_Y_1at0EsezO21DXKn0x9NwST0G1mKMjh4fm1Qxdc',
@@ -65,8 +68,38 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Aditya Pandey Portfolio',
+    alternateName: ['Aditya Pandey Dev', 'Aditya Pandey'],
+    url: 'https://adityapandeydev.vercel.app',
+  }
+
+  const personJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Person',
+    name: 'Aditya Pandey',
+    url: 'https://adityapandeydev.vercel.app',
+    jobTitle: 'Full Stack Developer',
+    sameAs: [
+      'https://linkedin.com/in/adityapandeydev', // Adjust if known
+      'https://github.com/AdityaPandey-DEV',
+    ],
+  }
+
   return (
     <html lang="en">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(personJsonLd) }}
+        />
+      </head>
       <body className={inter.className}>
         <Providers>{children}</Providers>
       </body>
