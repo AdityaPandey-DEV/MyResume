@@ -47,14 +47,6 @@ export const metadata: Metadata = {
     title: 'Aditya Pandey | Full Stack Developer',
     description: 'Portfolio of Aditya Pandey - Full Stack Developer & AI Enthusiast.',
     siteName: 'Aditya Pandey Portfolio',
-    images: [
-      {
-        url: '/og-image.png', // We might need to ensure this exists or use a default
-        width: 1200,
-        height: 630,
-        alt: 'Aditya Pandey Portfolio',
-      },
-    ],
   },
   twitter: {
     card: 'summary_large_image',
