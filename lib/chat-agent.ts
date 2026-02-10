@@ -318,14 +318,21 @@ export async function generateChatResponse(message: string, sessionId: string) {
 
                     let validMatches = scoredMatches;
 
-                    // Type filter first (pyq, mid, syllabus etc.)
+                    // Type filter first (mid, syllabus etc.)
+                    // BUT: skip type tokens that already match the REPO TITLE
+                    // e.g., "pyq" matches "PYQ-GEHU" title, so don't require "pyq" in file paths
                     let typeFilteredMatches = scoredMatches;
-                    if (hasTypeTokens) {
+                    const repoTitleLower = p.title!.toLowerCase();
+                    const filePathTypeTokens = typeTokens.filter(t => !repoTitleLower.includes(t));
+
+                    if (filePathTypeTokens.length > 0) {
                         typeFilteredMatches = scoredMatches.filter(m => {
                             const pathLower = m.path.toLowerCase();
-                            return typeTokens.some(t => pathLower.includes(t));
+                            return filePathTypeTokens.some(t => pathLower.includes(t));
                         });
-                        console.log(`[ChatAgent] Type Filter (${typeTokens.join(", ")}). Remaining: ${typeFilteredMatches.length}`);
+                        console.log(`[ChatAgent] Type Filter (${filePathTypeTokens.join(", ")}, skipped repo-title tokens: ${typeTokens.filter(t => repoTitleLower.includes(t)).join(", ")}). Remaining: ${typeFilteredMatches.length}`);
+                    } else {
+                        console.log(`[ChatAgent] All type tokens (${typeTokens.join(", ")}) match repo title, skipping type filter`);
                     }
 
                     // Specific token filter with FUZZY matching (math→maths, electronics→electronic)
@@ -379,7 +386,22 @@ export async function generateChatResponse(message: string, sessionId: string) {
                     // Return up to 50 files so frontend can handle "Read More"
                     const displayFiles = r!.files.slice(0, 50).map(f => {
                         const encodedPath = f.split('/').map(part => encodeURIComponent(part)).join('/');
-                        return `- [${f.split('/').pop()}](${r!.project.repoUrl}/blob/main/${encodedPath})`;
+                        const fileName = f.split('/').pop() || f;
+                        const hasExtension = fileName.includes('.');
+
+                        // For directories (no extension), build a meaningful breadcrumb
+                        // e.g., "btech/CSE/sem 5/dbms/mid" → "CSE sem 5 dbms mid"
+                        let displayName = fileName;
+                        if (!hasExtension) {
+                            const parts = f.split('/').filter(p =>
+                                p.length > 0 && !['main', 'blob', 'tree'].includes(p.toLowerCase())
+                            );
+                            // Take last 3-4 meaningful segments for context
+                            const meaningful = parts.slice(-Math.min(4, parts.length));
+                            displayName = meaningful.join(' › ');
+                        }
+
+                        return `- [${displayName}](${r!.project.repoUrl}/blob/main/${encodedPath})`;
                     }).join('\n');
                     const more = r!.files.length > 50 ? `\n...and ${r!.files.length - 50} more.` : '';
                     return `**${r!.project.title}** (${r!.files.length} matches):\n${displayFiles}${more}`;
