@@ -11,6 +11,48 @@ const groq = new Groq({
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
+// ---------------------------------------------------------------------------
+// Helper: Calculate File Relevance Score
+// ---------------------------------------------------------------------------
+function calculateScore(filePath: string, userMessage: string): number {
+    const lowerPath = filePath.toLowerCase();
+    const lowerMsg = userMessage.trim(); // Already lowercased in caller
+
+    let score = 0;
+
+    // 1. Exact phrase match (High Priority)
+    // e.g. "6th sem" in message matches "6th sem" in path
+    if (lowerPath.includes(lowerMsg)) {
+        score += 100;
+    }
+
+    // 2. Token overlap (Medium Priority)
+    const msgTokens = lowerMsg.split(/[^a-z0-9]+/).filter(t => t.length > 2);
+    let matchedTokens = 0;
+    for (const token of msgTokens) {
+        if (lowerPath.includes(token)) {
+            matchedTokens++;
+            score += 10;
+        }
+    }
+
+    // 3. Sequential Token Bonus (e.g. "6th" followed by "sem")
+    for (let i = 0; i < msgTokens.length - 1; i++) {
+        const bigram = `${msgTokens[i]} ${msgTokens[i + 1]}`;
+        if (lowerPath.includes(bigram)) {
+            score += 20;
+        }
+    }
+
+    // 4. Filename match preference (vs folder name)
+    const filename = lowerPath.split('/').pop() || "";
+    if (filename.includes(lowerMsg)) {
+        score += 30; // Extra bonus if the filename itself matches the query
+    }
+
+    return score;
+}
+
 // Optimized System Prompt
 const SYSTEM_PROMPT = `
 You are Aditya Pandey, a B.Tech CSE student & Full Stack Developer.
@@ -22,11 +64,12 @@ Goal: Chat with portfolio visitors as Aditya.
 - Student at Graphic Era Hill University.
 
 # Rules:
-- Answer ONLY using the Resume Context.
-- Projects: Use provided Repo URLs. Check Project List for name matches (e.g. "PYQ" -> "PYQ-GEHU").
-- LeetCode: explain concepts, but only claim solved if stats match.
-- Keep responses UNDER 50 WORDS unless asked for detail.
-- NO: "I am an AI", raw JSON, or Markdown code blocks unless code is asked.
+1. **Search & Answer**: Use the provided "Resume Context" to answer.
+2. **Ambiguity**: If a user asks a vague question (e.g., "syllabus"), ASK for clarification (e.g., "Which semester or subject are you looking for?").
+3. **Not Found**: If a specific file/project isn't found, apologize sincerely and suggest an alternative or ask for more details. NEVER invent files.
+4. **Projects**: Use provided Repo URLs.
+5. **Length**: Keep responses UNDER 50 WORDS unless asked for detail.
+6. **No Meta**: Don't say "I am an AI".
 
 # Resume Context:
 {CONTEXT}
@@ -80,12 +123,20 @@ export async function generateChatResponse(message: string, sessionId: string) {
                     console.log(`[ChatAgent] Fetching tree for ${p.title} (${p.repoUrl})...`);
                     const files = await fetchRepoFileTree(p.repoUrl!);
                     console.log(`[ChatAgent] Fetched ${files.length} files for ${p.title}`);
+
+                    // Filter matches
                     const matches = files.filter(path =>
                         msgTokens.some(token => path.toLowerCase().includes(token))
                     );
+
                     console.log(`[ChatAgent] Matches for ${p.title}: ${matches.length}`);
+
                     if (matches.length > 0) {
-                        return { project: p, files: matches };
+                        // SORTING LOGIC APPLIED HERE
+                        const sortedMatches = matches.sort((a, b) => {
+                            return calculateScore(b, lowerMsg) - calculateScore(a, lowerMsg);
+                        });
+                        return { project: p, files: sortedMatches };
                     }
                 } catch (e) {
                     console.error(`[ChatAgent] Failed to scan ${p.title}:`, e);
