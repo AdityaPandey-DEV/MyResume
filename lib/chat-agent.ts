@@ -17,31 +17,34 @@ type IntentResult =
     | { type: 'CLARIFY'; question: string }
     | { type: 'CHAT'; response: string };
 
-async function analyzeUserIntent(message: string): Promise<IntentResult> {
+async function analyzeUserIntent(message: string, previousMessage?: string): Promise<IntentResult> {
     try {
+        const historyContext = previousMessage ? `Previous User Message: "${previousMessage}"` : "No previous context.";
+
         const completion = await groq.chat.completions.create({
             messages: [
                 {
                     role: 'system',
                     content: `You are the Brain of Aditya's Portfolio AI. Classify user message: "${message}".
+${historyContext}
+
 Categories:
-1. **SEARCH**: User wants specific files (syllabus, notes, pyq, lab, question paper) or project info.
-   - Fix typos ("electroicss" -> "electronics").
-   - Expand acronyms ("DS" -> "Data Structures", "OS" -> "Operating Systems", "DAA" -> "Design and Analysis of Algorithms").
+1. **SEARCH**: User wants specific files/info.
+   - **Smart Merging**:
+     - If current message is a **refinement** of previous (e.g., Prev: "DevOps", Curr: "6th sem") -> MERGE: "DevOps 6th sem"
+     - If current message is a **new topic** (e.g., Prev: "Electronics", Curr: "6th sem syllabus") -> NEW: "6th semester syllabus" (Ignore previous)
+     - If current message is a **correction** (e.g., Prev: "6th sem", Curr: "no, 5th sem") -> NEW: "5th semester"
+   - **Fix Typos**: "electroicss" -> "electronics"
+   - **Expand Acronyms**: "DS" -> "Data Structures"
    - Output: SEARCH: <cleaned_specific_keywords>
-   - Ex: "dbms pyq" -> SEARCH: dbms pyq
-   - Ex: "wt syllabus" -> SEARCH: web technology syllabus
-   - Ex: "6th sem" -> SEARCH: 6th semester
 
-2. **CLARIFY**: Query is too vague (e.g., "syllabus", "notes", "paper") with NO subject or semester.
+2. **CLARIFY**: Query is too vague (e.g., "syllabus", "notes") with NO subject/semester AND NO previous context.
    - Output: CLARIFY: <short_question>
-   - Ex: "syllabus" -> CLARIFY: Which semester or subject syllabus do you need?
 
-3. **CHAT**: Greetings, situational, or identity questions.
+3. **CHAT**: Greetings, identity, or casual.
    - Output: CHAT: <friendly_response>
-   - Ex: "Hi" -> CHAT: Hey! I'm Aditya's AI assistant. Ask me about his projects or academic resources!
 
-Output ONLY the formatted string (SEARCH:..., CLARIFY:..., or CHAT:...).`
+Output ONLY the formatted string.`
                 },
                 { role: 'user', content: message }
             ],
@@ -59,7 +62,11 @@ Output ONLY the formatted string (SEARCH:..., CLARIFY:..., or CHAT:...).`
         return { type: 'CHAT', response: output };
     } catch (e) {
         console.error("Intent Analysis Failed:", e);
-        return { type: 'SEARCH', query: message }; // Fallback to raw search
+        // Fallback: If context exists and message is short, simple merge. Else raw.
+        if (previousMessage && message.split(' ').length < 8) {
+            return { type: 'SEARCH', query: `${previousMessage} ${message}` };
+        }
+        return { type: 'SEARCH', query: message };
     }
 }
 
@@ -160,6 +167,8 @@ export async function generateChatResponse(message: string, sessionId: string) {
     try {
         // 1. Context Awareness: Fetch Previous User Message
         let contextMessage = message;
+        let prevMsg = "";
+
         try {
             // Fetch last 2 user messages to avoid getting the current one if it was just saved
             const lastMessages = await prisma.chatMessage.findMany({
@@ -170,7 +179,6 @@ export async function generateChatResponse(message: string, sessionId: string) {
 
             // If the latest message in DB is the same as current (likely), skip it.
             // If the latest message is NOT the current one (e.g. streaming/delayed save), use it.
-            let prevMsg = "";
             if (lastMessages.length > 0) {
                 if (lastMessages[0].content.trim() === message.trim() && lastMessages.length > 1) {
                     prevMsg = lastMessages[1].content;
@@ -180,16 +188,16 @@ export async function generateChatResponse(message: string, sessionId: string) {
             }
 
             // Heuristic: If current message is short (< 8 words), it might be a refinement (e.g. "6th sem")
-            if (prevMsg && message.split(' ').length < 8) {
-                console.log(`[ChatAgent] Contextualizing: "${prevMsg}" + "${message}"`);
-                contextMessage = `${prevMsg} ${message}`;
-            }
+            // REMOVED: Old heuristic was causing sticky context. 
+            // Now we rely on analyzeUserIntent to decide if we should merge or not.
         } catch (e) {
             console.warn("[ChatAgent] Failed to fetch history:", e);
         }
 
         // --- 2. AI INTENT ANALYSIS ---
-        const intent = await analyzeUserIntent(contextMessage);
+        // Pass contextMessage (which is just 'message' now, unless we want to do manual pre-processing)
+        // Actually, we should pass 'message' and 'prevMsg' to the LLM.
+        const intent = await analyzeUserIntent(message, prevMsg || undefined);
 
         if (intent.type === 'CLARIFY') {
             return intent.question;
