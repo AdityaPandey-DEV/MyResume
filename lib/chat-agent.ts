@@ -318,27 +318,43 @@ export async function generateChatResponse(message: string, sessionId: string) {
 
                     let validMatches = scoredMatches;
 
-                    if (hasSpecificTokens) {
-                        validMatches = validMatches.filter(m => {
-                            const pathLower = m.path.toLowerCase();
-                            // Check if at least ONE specific token is present
-                            return specificTokens.some(t => pathLower.includes(t));
-                        });
-                        console.log(`[ChatAgent] Applied Specific Token Filter (${specificTokens.join(", ")}). Remaining: ${validMatches.length}`);
-                    }
-
+                    // Type filter first (pyq, mid, syllabus etc.)
+                    let typeFilteredMatches = scoredMatches;
                     if (hasTypeTokens) {
-                        validMatches = validMatches.filter(m => {
+                        typeFilteredMatches = scoredMatches.filter(m => {
                             const pathLower = m.path.toLowerCase();
-                            // Check if at least ONE type token exists in the file path
                             return typeTokens.some(t => pathLower.includes(t));
                         });
-                        console.log(`[ChatAgent] Applied Type Token Filter (${typeTokens.join(", ")}). Remaining: ${validMatches.length}`);
+                        console.log(`[ChatAgent] Type Filter (${typeTokens.join(", ")}). Remaining: ${typeFilteredMatches.length}`);
+                    }
+
+                    // Specific token filter with FUZZY matching (math→maths, electronics→electronic)
+                    if (hasSpecificTokens) {
+                        validMatches = typeFilteredMatches.filter(m => {
+                            const pathLower = m.path.toLowerCase();
+                            // Fuzzy: check if path contains ANY token as a substring (partial match)
+                            // "math" matches "maths", "mathematics"
+                            // "electronics" matches "electronic", "electronics" 
+                            return specificTokens.some(t => {
+                                if (pathLower.includes(t)) return true;
+                                // Also check if path word starts with the token (prefix match)
+                                const pathParts = pathLower.split(/[^a-z0-9]+/);
+                                return pathParts.some(part => part.startsWith(t) || t.startsWith(part));
+                            });
+                        });
+                        console.log(`[ChatAgent] Specific Filter (${specificTokens.join(", ")}). Remaining: ${validMatches.length}`);
+
+                        // SMART FALLBACK: If specific filter killed ALL results but type filter had results,
+                        // fall back to type-only results (e.g., show all PYQ files when "math pyq" finds no "math" folder)
+                        if (validMatches.length === 0 && typeFilteredMatches.length > 0) {
+                            console.log(`[ChatAgent] Specific filter too strict, falling back to type-only results`);
+                            validMatches = typeFilteredMatches;
+                        }
+                    } else {
+                        validMatches = typeFilteredMatches;
                     }
 
                     // Strict Threshold
-                    // If we filtered by type/specific, we can trust the results more, so lower the general score threshold a bit (20).
-                    // This allows exact matches like "pyq" (20 pts) to pass if that's all there is.
                     const threshold = 20;
                     validMatches = validMatches.filter(m => m.score >= threshold);
 
