@@ -96,7 +96,37 @@ Goal: Chat with portfolio visitors as Aditya.
 
 export async function generateChatResponse(message: string, sessionId: string) {
     try {
-        // 1. Fetch Comprehensive Resume Context
+        // 1. Context Awareness: Fetch Previous User Message
+        let contextMessage = message;
+        try {
+            // Fetch last 2 user messages to avoid getting the current one if it was just saved
+            const lastMessages = await prisma.chatMessage.findMany({
+                where: { sessionId, role: 'user' },
+                orderBy: { createdAt: 'desc' },
+                take: 2
+            });
+
+            // If the latest message in DB is the same as current (likely), skip it.
+            // If the latest message is NOT the current one (e.g. streaming/delayed save), use it.
+            let prevMsg = "";
+            if (lastMessages.length > 0) {
+                if (lastMessages[0].content.trim() === message.trim() && lastMessages.length > 1) {
+                    prevMsg = lastMessages[1].content;
+                } else if (lastMessages[0].content.trim() !== message.trim()) {
+                    prevMsg = lastMessages[0].content;
+                }
+            }
+
+            // Heuristic: If current message is short (< 8 words), it might be a refinement (e.g. "6th sem")
+            if (prevMsg && message.split(' ').length < 8) {
+                console.log(`[ChatAgent] Contextualizing: "${prevMsg}" + "${message}"`);
+                contextMessage = `${prevMsg} ${message}`;
+            }
+        } catch (e) {
+            console.warn("[ChatAgent] Failed to fetch history:", e);
+        }
+
+        // 2. Fetch Comprehensive Resume Context
         const [about, projects, skills, experience, codingProfileData, certifications] = await Promise.all([
             prisma.about.findFirst({ include: { values: true, focusAreas: true, journey: { include: { paragraphs: true } } } }),
             prisma.project.findMany({ select: { title: true, description: true, repoUrl: true, technologies: true } }),
@@ -107,7 +137,7 @@ export async function generateChatResponse(message: string, sessionId: string) {
         ]);
 
         const codingProfile = codingProfileData as any;
-        const lowerMsg = message.toLowerCase().substring(0, 500);
+        const lowerMsg = contextMessage.toLowerCase().substring(0, 500);
 
         // 2. Intelligent Project Matching
         const matchedProjects = projects.filter(p =>
