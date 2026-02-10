@@ -9,14 +9,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     providers: [
         EmailProvider({
             server: {
-                host: process.env.EMAIL_SERVER_HOST,
-                port: Number(process.env.EMAIL_SERVER_PORT),
+                host: process.env.EMAIL_SERVER_HOST || 'smtp.gmail.com',
+                port: Number(process.env.EMAIL_SERVER_PORT || 465),
                 auth: {
-                    user: process.env.EMAIL_SERVER_USER,
+                    user: process.env.EMAIL_SERVER_USER || process.env.ADMIN_EMAIL,
                     pass: process.env.EMAIL_SERVER_PASSWORD,
                 },
             },
-            from: process.env.EMAIL_FROM,
+            from: process.env.EMAIL_FROM || process.env.ADMIN_EMAIL,
         }),
     ],
     session: {
