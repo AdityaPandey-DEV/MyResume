@@ -16,38 +16,51 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 // ---------------------------------------------------------------------------
 function calculateScore(filePath: string, userMessage: string): number {
     const lowerPath = filePath.toLowerCase();
-    const lowerMsg = userMessage.trim(); // Already lowercased in caller
+    const lowerMsg = userMessage.trim();
+
+    // Split message into significant tokens
+    // We treat "syllabus", "notes" as low-weight generic words if they appear alone
+    const msgTokens = lowerMsg.split(/[^a-z0-9]+/).filter(t => t.length > 1);
 
     let score = 0;
 
     // 1. Exact phrase match (High Priority)
-    // e.g. "6th sem" in message matches "6th sem" in path
     if (lowerPath.includes(lowerMsg)) {
-        score += 100;
+        score += 80;
     }
 
-    // 2. Token overlap (Medium Priority)
-    const msgTokens = lowerMsg.split(/[^a-z0-9]+/).filter(t => t.length > 2);
-    let matchedTokens = 0;
+    // 2. Token Matching
     for (const token of msgTokens) {
+        // Is it a number? (e.g., "6th", "5", "2024") - SUPER HIGH PRIORITY
+        // Users often search by semester number.
+        const isNumber = /\d/.test(token);
+        const weight = isNumber ? 50 : 10;
+
+        // Check for whole word match boundaries for better accuracy
+        // e.g., match "6th" but not "26th" if possible, strict check is hard with simple includes
         if (lowerPath.includes(token)) {
-            matchedTokens++;
-            score += 10;
+            score += weight;
+
+            // Bonus: Token matches start of filename?
+            const filename = lowerPath.split('/').pop() || "";
+            if (filename.startsWith(token)) {
+                score += 15;
+            }
         }
     }
 
-    // 3. Sequential Token Bonus (e.g. "6th" followed by "sem")
+    // 3. Sequential Token Bonus
     for (let i = 0; i < msgTokens.length - 1; i++) {
         const bigram = `${msgTokens[i]} ${msgTokens[i + 1]}`;
         if (lowerPath.includes(bigram)) {
-            score += 20;
+            score += 30; // Boost sequential matches "6th sem"
         }
     }
 
-    // 4. Filename match preference (vs folder name)
+    // 4. Filename specific phrase match
     const filename = lowerPath.split('/').pop() || "";
     if (filename.includes(lowerMsg)) {
-        score += 30; // Extra bonus if the filename itself matches the query
+        score += 40;
     }
 
     return score;
@@ -103,7 +116,7 @@ export async function generateChatResponse(message: string, sessionId: string) {
         }));
 
         // --- DEEP SEARCH: RESTORED DETERMINISTIC LOGIC (MULTI-CANDIDATE) ---
-        const msgTokens = lowerMsg.split(/[^a-z0-9]+/).filter(t => t.length > 2);
+        const msgTokens = lowerMsg.split(/[^a-z0-9]+/).filter(t => t.length > 1);
 
         // 1. Find ALL potential candidates (match title tokens)
         const candidates = projects.filter((p: any) => {
@@ -114,29 +127,37 @@ export async function generateChatResponse(message: string, sessionId: string) {
 
         // 2. Scan top 3 candidates in parallel
         if (candidates.length > 0) {
-            // Prioritize: matched tokens count or exact match? For now, just take first 3 from the filter.
             const topCandidates = candidates.slice(0, 3);
             console.log(`[ChatAgent] Scanning Top 3: ${topCandidates.map(c => c.title).join(", ")}`);
 
             const searchResults = await Promise.all(topCandidates.map(async (p) => {
                 try {
-                    console.log(`[ChatAgent] Fetching tree for ${p.title} (${p.repoUrl})...`);
                     const files = await fetchRepoFileTree(p.repoUrl!);
-                    console.log(`[ChatAgent] Fetched ${files.length} files for ${p.title}`);
 
-                    // Filter matches
-                    const matches = files.filter(path =>
-                        msgTokens.some(token => path.toLowerCase().includes(token))
-                    );
+                    // Filter and Score Matches
+                    const scoredMatches = files.map(path => ({
+                        path,
+                        score: calculateScore(path, lowerMsg)
+                    }))
+                        .filter(m => m.score > 0);
 
-                    console.log(`[ChatAgent] Matches for ${p.title}: ${matches.length}`);
+                    // Dynamic Thresholding:
+                    // If user asks "6th sem syllabus" (3 tokens), we expect a decent score.
+                    // If file only matches "syllabus" (10 pts), it should be filtered out.
+                    // Threshold = (TokenCount * 8) + 10? 
+                    // "devops syllabus" (2 tokens) -> 26. "syllabus" match (10) -> Fail. "devops syllabus" match (20+30=50) -> Pass.
+                    // "6th sem" (2 tokens, one number) -> 26. "6th" (50) -> Pass.
+                    const threshold = (msgTokens.length * 15) - 5;
 
-                    if (matches.length > 0) {
-                        // SORTING LOGIC APPLIED HERE
-                        const sortedMatches = matches.sort((a, b) => {
-                            return calculateScore(b, lowerMsg) - calculateScore(a, lowerMsg);
-                        });
-                        return { project: p, files: sortedMatches };
+                    const validMatches = scoredMatches.filter(m => m.score >= threshold);
+
+                    console.log(`[ChatAgent] Matches for ${p.title}: Found ${scoredMatches.length}, Valid > Threshold(${threshold}): ${validMatches.length}`);
+
+                    if (validMatches.length > 0) {
+                        return {
+                            project: p,
+                            files: validMatches.sort((a, b) => b.score - a.score).map(m => m.path)
+                        };
                     }
                 } catch (e) {
                     console.error(`[ChatAgent] Failed to scan ${p.title}:`, e);
