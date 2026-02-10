@@ -39,16 +39,18 @@ ${historyContext}
 Categories:
 1. **SEARCH**: User wants specific files/info.
    - **Smart Merging**:
-     - If current message is a **refinement** of previous (e.g., Prev: "DevOps", Curr: "6th sem") -> MERGE: "DevOps 6th sem"
+     - If current message is a **refinement** of previous (e.g., Prev: "DevOps syllabus", Curr: "6th sem") -> MERGE: "devops syllabus 6th sem"
      - If current message is a **new topic** (e.g., Prev: "Electronics", Curr: "6th sem syllabus") -> NEW: "6th semester syllabus" (Ignore previous)
      - If current message is a **correction** (e.g., Prev: "6th sem", Curr: "no, 5th sem") -> NEW: "5th semester"
    - **Correction Indicators**: "no", "not", "actually", "sorry", "I mean" -> Treat as NEW/CORRECTION.
    - **Important**: If unsure whether it's MERGE or NEW, prefer **NEW**.
-   - **Fix Typos**: "electroicss" -> "electronics"
-   - **Expand Acronyms**: "DS" -> "Data Structures"
-   - Output: SEARCH: <cleaned_specific_keywords>
+   - **Fix Typos**: "electroicss" -> "electronics", "devopps" -> "devops"
+   - **Expand ONLY subject acronyms**: "DS" -> "data structures", "OS" -> "operating systems", "DAA" -> "design and analysis of algorithms", "WT" -> "web technology"
+   - **NEVER expand these file-system tokens** (keep them exactly as-is): pyq, mid, endsem, midsem, lab, syllabus, notes, sem, semester, assignment, practical, experiment
+   - **If previous context + current message together contain a subject AND a document type, ALWAYS output SEARCH, never CLARIFY.**
+   - Output: SEARCH: <cleaned_keywords_in_lowercase>
 
-2. **CLARIFY**: Query is too vague (e.g., "syllabus", "notes") with NO subject/semester AND NO previous context.
+2. **CLARIFY**: Query is too vague (e.g., just "syllabus" or "notes" alone) with NO subject/semester AND NO useful previous context.
    - Output: CLARIFY: <short_question>
 
 3. **CHAT**: Greetings, identity, or casual.
