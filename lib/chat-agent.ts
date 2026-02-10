@@ -29,25 +29,35 @@ function calculateScore(filePath: string, userMessage: string): number {
         score += 80;
     }
 
-    // 2. Token Matching
-    for (const token of msgTokens) {
+    // 2. Token Matching with Positional Priority
+    // Earlier tokens get higher weight (Left-to-Right Priority)
+    msgTokens.forEach((token, index) => {
         // Is it a number? (e.g., "6th", "5", "2024") - SUPER HIGH PRIORITY
         // Users often search by semester number.
         const isNumber = /\d/.test(token);
-        const weight = isNumber ? 50 : 10;
+
+        // Base weight: 
+        // - Numbers: 60 (Increased slightly)
+        // - Words: 15
+        // Positional Boost: (TotalTokens - Index) * 15 
+        // e.g. "6th sem syllabus" (3 tokens):
+        // "6th" (index 0): 60 + (3-0)*15 = 105
+        // "sem" (index 1): 15 + (3-1)*15 = 45
+        // "syllabus" (index 2): 15 + (3-2)*15 = 30
+        const positionBonus = (msgTokens.length - index) * 15;
+        const weight = (isNumber ? 60 : 15) + positionBonus;
 
         // Check for whole word match boundaries for better accuracy
-        // e.g., match "6th" but not "26th" if possible, strict check is hard with simple includes
         if (lowerPath.includes(token)) {
             score += weight;
 
             // Bonus: Token matches start of filename?
             const filename = lowerPath.split('/').pop() || "";
             if (filename.startsWith(token)) {
-                score += 15;
+                score += 20;
             }
         }
-    }
+    });
 
     // 3. Sequential Token Bonus
     for (let i = 0; i < msgTokens.length - 1; i++) {
@@ -154,10 +164,10 @@ export async function generateChatResponse(message: string, sessionId: string) {
         const msgTokens = lowerMsg.split(/[^a-z0-9]+/).filter(t => t.length > 1);
 
         // Define Generic Terms to ignore if they are the ONLY matches
-        const GENERIC_TERMS = new Set(["file", "download", "pdf", "semester", "sem", "folder", "document"]);
+        const GENERIC_TERMS = new Set(["file", "download", "pdf", "folder", "document"]);
 
         // Define Strict Document Types (If user asks for these, the file MUST match)
-        const DOCUMENT_TYPES = new Set(["syllabus", "notes", "question", "paper", "exam", "pyq", "lab", "experiment", "practical", "assignment"]);
+        const DOCUMENT_TYPES = new Set(["syllabus", "notes", "question", "paper", "exam", "pyq", "lab", "experiment", "practical", "assignment", "semester", "sem"]);
 
         // Identify "Specific" tokens (Subject/Topic) - anything NOT generic, NOT a type, and NOT a number
         const specificTokens = msgTokens.filter(t => !GENERIC_TERMS.has(t) && !DOCUMENT_TYPES.has(t) && !/\d/.test(t));
