@@ -79,7 +79,13 @@ Goal: Chat with portfolio visitors as Aditya.
 # Rules:
 1. **Search & Answer**: Use the provided "Resume Context" to answer.
 2. **Ambiguity**: If a user asks a vague question (e.g., "syllabus"), ASK for clarification (e.g., "Which semester or subject are you looking for?").
-3. **Not Found**: If a specific file/project isn't found, apologize sincerely and suggest an alternative or ask for more details. NEVER invent files.
+3. **Not Found / Partial Match**: 
+   - If a specific subject (e.g., "DevOps") is requested but NOT found in the context, DO NOT hallucinate. 
+   - Instead, ask clarifying questions in this specific order to widen the scope:
+     a. "Which semester is this subject in?"
+     b. "Is this for a specific course or specialization?"
+     c. "Is this for a specific university?"
+   - Say something like: "I couldn't find 'DevOps' in my immediate project files. Which semester is this for? I can check if it's under a different name."
 4. **Projects**: Use provided Repo URLs.
 5. **Length**: Keep responses UNDER 50 WORDS unless asked for detail.
 6. **No Meta**: Don't say "I am an AI".
@@ -104,7 +110,6 @@ export async function generateChatResponse(message: string, sessionId: string) {
         const lowerMsg = message.toLowerCase().substring(0, 500);
 
         // 2. Intelligent Project Matching
-        // Sort projects: matched ones first, then featured/recent ones
         const matchedProjects = projects.filter(p =>
             p.title && lowerMsg.includes(p.title.toLowerCase())
         );
@@ -117,6 +122,13 @@ export async function generateChatResponse(message: string, sessionId: string) {
 
         // --- DEEP SEARCH: RESTORED DETERMINISTIC LOGIC (MULTI-CANDIDATE) ---
         const msgTokens = lowerMsg.split(/[^a-z0-9]+/).filter(t => t.length > 1);
+
+        // Define Generic Terms to ignore if they are the ONLY matches
+        const GENERIC_TERMS = new Set(["syllabus", "notes", "question", "paper", "exam", "file", "download", "pdf", "semester", "sem"]);
+
+        // Identify "Specific" tokens (anything NOT generic and NOT a number, though numbers are specific too)
+        const specificTokens = msgTokens.filter(t => !GENERIC_TERMS.has(t) && !/\d/.test(t));
+        const hasSpecificTokens = specificTokens.length > 0;
 
         // 1. Find ALL potential candidates (match title tokens)
         const candidates = projects.filter((p: any) => {
@@ -141,21 +153,26 @@ export async function generateChatResponse(message: string, sessionId: string) {
                     }))
                         .filter(m => m.score > 0);
 
-                    // Dynamic Thresholding:
-                    // If user asks "devops syllabus" (2 tokens):
-                    // "devops": 10 + 20 = 30.
-                    // "syllabus": 10 + 10 = 20.
-                    // Threshold should be higher than just the last token alone.
-                    // Let's set it to 25.
-                    // "6th sem syllabus" (3 tokens):
-                    // "6th": 50 + 30 = 80.
-                    // "sem": 10 + 20 = 30.
-                    // "syllabus": 10 + 10 = 20.
+                    // strict filtering:
+                    // If the query has specific tokens (e.g. "DevOps"), ensure at least one is matched in the path.
+                    // Otherwise we get "Syllabus.pdf" matching "DevOps Syllabus" just because "Syllabus" matched.
+
+                    let validMatches = scoredMatches;
+
+                    if (hasSpecificTokens) {
+                        validMatches = scoredMatches.filter(m => {
+                            const pathLower = m.path.toLowerCase();
+                            // Check if at least ONE specific token is present
+                            return specificTokens.some(t => pathLower.includes(t));
+                        });
+                        console.log(`[ChatAgent] Applied Specific Token Filter (${specificTokens.join(", ")}). Remaining: ${validMatches.length}`);
+                    }
+
+                    // Strict Threshold
+                    // If specific tokens matched, we are good.
+                    // If NO specific tokens (e.g. "6th sem syllabus"), we rely on the score threshold.
                     const threshold = 25;
-
-                    const validMatches = scoredMatches.filter(m => m.score >= threshold);
-
-                    console.log(`[ChatAgent] Matches for ${p.title}: Found ${scoredMatches.length}, Valid > Threshold(${threshold}): ${validMatches.length}`);
+                    validMatches = validMatches.filter(m => m.score >= threshold);
 
                     if (validMatches.length > 0) {
                         return {
