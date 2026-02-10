@@ -154,11 +154,18 @@ export async function generateChatResponse(message: string, sessionId: string) {
         const msgTokens = lowerMsg.split(/[^a-z0-9]+/).filter(t => t.length > 1);
 
         // Define Generic Terms to ignore if they are the ONLY matches
-        const GENERIC_TERMS = new Set(["syllabus", "notes", "question", "paper", "exam", "file", "download", "pdf", "semester", "sem"]);
+        const GENERIC_TERMS = new Set(["file", "download", "pdf", "semester", "sem", "folder", "document"]);
 
-        // Identify "Specific" tokens (anything NOT generic and NOT a number, though numbers are specific too)
-        const specificTokens = msgTokens.filter(t => !GENERIC_TERMS.has(t) && !/\d/.test(t));
+        // Define Strict Document Types (If user asks for these, the file MUST match)
+        const DOCUMENT_TYPES = new Set(["syllabus", "notes", "question", "paper", "exam", "pyq", "lab", "experiment", "practical", "assignment"]);
+
+        // Identify "Specific" tokens (Subject/Topic) - anything NOT generic, NOT a type, and NOT a number
+        const specificTokens = msgTokens.filter(t => !GENERIC_TERMS.has(t) && !DOCUMENT_TYPES.has(t) && !/\d/.test(t));
         const hasSpecificTokens = specificTokens.length > 0;
+
+        // Identify "Type" tokens (e.g. "syllabus", "pyq")
+        const typeTokens = msgTokens.filter(t => DOCUMENT_TYPES.has(t));
+        const hasTypeTokens = typeTokens.length > 0;
 
         // 1. Find ALL potential candidates (match title tokens)
         const candidates = projects.filter((p: any) => {
@@ -185,12 +192,12 @@ export async function generateChatResponse(message: string, sessionId: string) {
 
                     // strict filtering:
                     // If the query has specific tokens (e.g. "DevOps"), ensure at least one is matched in the path.
-                    // Otherwise we get "Syllabus.pdf" matching "DevOps Syllabus" just because "Syllabus" matched.
+                    // If the query has type tokens (e.g., "PYQ"), ensure at least one is matched in the path.
 
                     let validMatches = scoredMatches;
 
                     if (hasSpecificTokens) {
-                        validMatches = scoredMatches.filter(m => {
+                        validMatches = validMatches.filter(m => {
                             const pathLower = m.path.toLowerCase();
                             // Check if at least ONE specific token is present
                             return specificTokens.some(t => pathLower.includes(t));
@@ -198,10 +205,19 @@ export async function generateChatResponse(message: string, sessionId: string) {
                         console.log(`[ChatAgent] Applied Specific Token Filter (${specificTokens.join(", ")}). Remaining: ${validMatches.length}`);
                     }
 
+                    if (hasTypeTokens) {
+                        validMatches = validMatches.filter(m => {
+                            const pathLower = m.path.toLowerCase();
+                            // Check if at least ONE type token exists in the file path
+                            return typeTokens.some(t => pathLower.includes(t));
+                        });
+                        console.log(`[ChatAgent] Applied Type Token Filter (${typeTokens.join(", ")}). Remaining: ${validMatches.length}`);
+                    }
+
                     // Strict Threshold
-                    // If specific tokens matched, we are good.
-                    // If NO specific tokens (e.g. "6th sem syllabus"), we rely on the score threshold.
-                    const threshold = 25;
+                    // If we filtered by type/specific, we can trust the results more, so lower the general score threshold a bit (20).
+                    // This allows exact matches like "pyq" (20 pts) to pass if that's all there is.
+                    const threshold = 20;
                     validMatches = validMatches.filter(m => m.score >= threshold);
 
                     if (validMatches.length > 0) {
