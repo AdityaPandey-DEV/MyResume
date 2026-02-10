@@ -21,7 +21,7 @@ export default function PrivacyPolicy() {
                     <section>
                         <h2 className="text-xl font-semibold text-gray-900 mb-3">1. Introduction</h2>
                         <p>
-                            Aditya Pandey ("we", "us", or "our") operates the MyResume LinkedIn Sync Chrome Extension within the MyResume portfolio application.
+                            Aditya Pandey (&quot;we&quot;, &quot;us&quot;, or &quot;our&quot;) operates the MyResume LinkedIn Sync Chrome Extension within the MyResume portfolio application.
                             We respect your privacy and are committed to protecting it through our compliance with this policy.
                             This policy describes the types of information we may collect from you or that you may provide when you use the MyResume LinkedIn Sync extension
                             and our practices for collecting, using, maintaining, protected, and disclosing that information.
@@ -30,7 +30,7 @@ export default function PrivacyPolicy() {
 
                     <section>
                         <h2 className="text-xl font-semibold text-gray-900 mb-3">2. Information We Collect</h2>
-                        <p className="mb-2">We collect the following types of information when you explicitly use the "Sync Profile" feature on your LinkedIn profile page:</p>
+                        <p className="mb-2">We collect the following types of information when you explicitly use the &quot;Sync Profile&quot; feature on your LinkedIn profile page:</p>
                         <ul className="list-disc pl-5 space-y-1">
                             <li><strong>Public Profile Information:</strong> Name, headline, about section, experience, education, skills, and certifications visible on your public LinkedIn profile.</li>
                             <li><strong>Usage Data:</strong> Information about how you use the extension, such as timestamps of sync actions.</li>
@@ -51,7 +51,7 @@ export default function PrivacyPolicy() {
                     <section>
                         <h2 className="text-xl font-semibold text-gray-900 mb-3">4. Data Processing and Sharing</h2>
                         <p>
-                            We do not sell your personal data. However, portions of your profile text (e.g., "About" section, "Experience" descriptions)
+                            We do not sell your personal data. However, portions of your profile text (e.g., &quot;About&quot; section, &quot;Experience&quot; descriptions)
                             may be processed by third-party AI providers to generate enhanced content:
                         </p>
                         <ul className="list-disc pl-5 space-y-1 mt-2">

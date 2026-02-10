@@ -1,33 +1,43 @@
 
 import NextAuth from 'next-auth'
-import GoogleProvider from 'next-auth/providers/google'
+import EmailProvider from 'next-auth/providers/email'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import { prisma } from '@/lib/prisma'
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
     adapter: PrismaAdapter(prisma),
-    debug: true,
     providers: [
-        GoogleProvider({
-            clientId: process.env.GOOGLE_CLIENT_ID!,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-            allowDangerousEmailAccountLinking: true,
+        EmailProvider({
+            server: {
+                host: process.env.EMAIL_SERVER_HOST,
+                port: Number(process.env.EMAIL_SERVER_PORT),
+                auth: {
+                    user: process.env.EMAIL_SERVER_USER,
+                    pass: process.env.EMAIL_SERVER_PASSWORD,
+                },
+            },
+            from: process.env.EMAIL_FROM,
         }),
     ],
     session: {
-        strategy: 'jwt',
+        strategy: 'database',
+        maxAge: 30 * 24 * 60 * 60, // 30 Days
     },
     pages: {
         signIn: '/admin/login',
+        verifyRequest: '/admin/login?verify=true',
     },
     callbacks: {
-        async jwt({ token, user }: any) {
-            if (user) token.id = user.id
-            return token
+        async signIn({ user }) {
+            // Strict check: Only allow the Admin Email
+            if (user.email === process.env.ADMIN_EMAIL) {
+                return true
+            }
+            return false // Deny everyone else
         },
-        async session({ session, token }: any) {
+        async session({ session, user }: any) {
             if (session.user) {
-                session.user.id = token.id as string
+                session.user.id = user.id
             }
             return session
         },
