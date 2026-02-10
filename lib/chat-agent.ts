@@ -257,7 +257,7 @@ export async function generateChatResponse(message: string, sessionId: string) {
         const GENERIC_TERMS = new Set(["file", "download", "pdf", "folder", "document"]);
 
         // Define Strict Document Types (If user asks for these, the file MUST match)
-        const DOCUMENT_TYPES = new Set(["syllabus", "notes", "question", "paper", "exam", "pyq", "lab", "experiment", "practical", "assignment", "semester", "sem"]);
+        const DOCUMENT_TYPES = new Set(["syllabus", "notes", "question", "paper", "exam", "pyq", "lab", "experiment", "practical", "assignment", "semester", "sem", "mid", "midsem", "endsem", "midterm"]);
 
         // Identify "Specific" tokens (Subject/Topic) - anything NOT generic, NOT a type, and NOT a number
         const specificTokens = msgTokens.filter(t => !GENERIC_TERMS.has(t) && !DOCUMENT_TYPES.has(t) && !/\d/.test(t));
@@ -274,9 +274,19 @@ export async function generateChatResponse(message: string, sessionId: string) {
             return lowerMsg.includes(titleLower) || titleLower.split(/[^a-z0-9]+/).some((t: string) => msgTokens.includes(t));
         });
 
-        // 2. Scan top 3 candidates in parallel
-        if (candidates.length > 0) {
-            const topCandidates = candidates.slice(0, 3);
+        // 2. Prioritize candidates whose TITLE contains a type token
+        // e.g., "PYQ-GEHU" should rank above "DBMS-And-OS" when user says "pyq"
+        const sortedCandidates = [...candidates].sort((a, b) => {
+            const aTitle = a.title!.toLowerCase();
+            const bTitle = b.title!.toLowerCase();
+            const aTypeMatch = typeTokens.filter(t => aTitle.includes(t)).length;
+            const bTypeMatch = typeTokens.filter(t => bTitle.includes(t)).length;
+            return bTypeMatch - aTypeMatch; // Higher type match = higher priority
+        });
+
+        // 3. Scan top 3 candidates in parallel
+        if (sortedCandidates.length > 0) {
+            const topCandidates = sortedCandidates.slice(0, 3);
             console.log(`[ChatAgent] Scanning Top 3: ${topCandidates.map(c => c.title).join(", ")}`);
 
             const searchResults = await Promise.all(topCandidates.map(async (p) => {
