@@ -142,12 +142,16 @@ export async function generateChatResponse(message: string, sessionId: string) {
                         .filter(m => m.score > 0);
 
                     // Dynamic Thresholding:
-                    // If user asks "6th sem syllabus" (3 tokens), we expect a decent score.
-                    // If file only matches "syllabus" (10 pts), it should be filtered out.
-                    // Threshold = (TokenCount * 8) + 10? 
-                    // "devops syllabus" (2 tokens) -> 26. "syllabus" match (10) -> Fail. "devops syllabus" match (20+30=50) -> Pass.
-                    // "6th sem" (2 tokens, one number) -> 26. "6th" (50) -> Pass.
-                    const threshold = (msgTokens.length * 15) - 5;
+                    // If user asks "devops syllabus" (2 tokens):
+                    // "devops": 10 + 20 = 30.
+                    // "syllabus": 10 + 10 = 20.
+                    // Threshold should be higher than just the last token alone.
+                    // Let's set it to 25.
+                    // "6th sem syllabus" (3 tokens):
+                    // "6th": 50 + 30 = 80.
+                    // "sem": 10 + 20 = 30.
+                    // "syllabus": 10 + 10 = 20.
+                    const threshold = 25;
 
                     const validMatches = scoredMatches.filter(m => m.score >= threshold);
 
