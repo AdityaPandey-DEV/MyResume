@@ -5,11 +5,19 @@ import { chatQueue } from './rate-limiter';
 import { fetchRepoFileTree } from './github-utils';
 
 // Initialize Clients
+if (!process.env.GROQ_API_KEY) {
+    console.warn("GROQ_API_KEY is missing. Chat features may not work correctly.");
+}
+
 const groq = new Groq({
     apiKey: process.env.GROQ_API_KEY || 'dummy_key',
 });
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+
+// --- In-Memory Cache for Repo Trees ---
+const repoCache = new Map<string, { files: string[]; timestamp: number }>();
+const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 
 // --- AI Intent Analysis ---
 type IntentResult =
@@ -34,6 +42,8 @@ Categories:
      - If current message is a **refinement** of previous (e.g., Prev: "DevOps", Curr: "6th sem") -> MERGE: "DevOps 6th sem"
      - If current message is a **new topic** (e.g., Prev: "Electronics", Curr: "6th sem syllabus") -> NEW: "6th semester syllabus" (Ignore previous)
      - If current message is a **correction** (e.g., Prev: "6th sem", Curr: "no, 5th sem") -> NEW: "5th semester"
+   - **Correction Indicators**: "no", "not", "actually", "sorry", "I mean" -> Treat as NEW/CORRECTION.
+   - **Important**: If unsure whether it's MERGE or NEW, prefer **NEW**.
    - **Fix Typos**: "electroicss" -> "electronics"
    - **Expand Acronyms**: "DS" -> "Data Structures"
    - Output: SEARCH: <cleaned_specific_keywords>
@@ -75,7 +85,7 @@ Output ONLY the formatted string.`
 // ---------------------------------------------------------------------------
 function calculateScore(filePath: string, userMessage: string): number {
     const lowerPath = filePath.toLowerCase();
-    const lowerMsg = userMessage.trim();
+    const lowerMsg = userMessage.toLowerCase().trim();
 
     // Split message into significant tokens
     // We treat "syllabus", "notes" as low-weight generic words if they appear alone
@@ -269,7 +279,19 @@ export async function generateChatResponse(message: string, sessionId: string) {
 
             const searchResults = await Promise.all(topCandidates.map(async (p) => {
                 try {
-                    const files = await fetchRepoFileTree(p.repoUrl!);
+                    // --- Cached Repo Tree Fetch ---
+                    const cacheKey = p.repoUrl!;
+                    const cached = repoCache.get(cacheKey);
+                    let files: string[];
+
+                    if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
+                        files = cached.files;
+                        console.log(`[ChatAgent] Cache HIT for ${p.title}`);
+                    } else {
+                        files = await fetchRepoFileTree(p.repoUrl!);
+                        repoCache.set(cacheKey, { files, timestamp: Date.now() });
+                        console.log(`[ChatAgent] Cache MISS for ${p.title}, fetched ${files.length} files`);
+                    }
 
                     // Filter and Score Matches
                     const scoredMatches = files.map(path => ({
