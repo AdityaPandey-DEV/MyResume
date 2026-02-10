@@ -11,6 +11,58 @@ const groq = new Groq({
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
+// --- AI Intent Analysis ---
+type IntentResult =
+    | { type: 'SEARCH'; query: string }
+    | { type: 'CLARIFY'; question: string }
+    | { type: 'CHAT'; response: string };
+
+async function analyzeUserIntent(message: string): Promise<IntentResult> {
+    try {
+        const completion = await groq.chat.completions.create({
+            messages: [
+                {
+                    role: 'system',
+                    content: `You are the Brain of Aditya's Portfolio AI. Classify user message: "${message}".
+Categories:
+1. **SEARCH**: User wants specific files (syllabus, notes, pyq, lab, question paper) or project info.
+   - Fix typos ("electroicss" -> "electronics").
+   - Expand acronyms ("DS" -> "Data Structures", "OS" -> "Operating Systems", "DAA" -> "Design and Analysis of Algorithms").
+   - Output: SEARCH: <cleaned_specific_keywords>
+   - Ex: "dbms pyq" -> SEARCH: dbms pyq
+   - Ex: "wt syllabus" -> SEARCH: web technology syllabus
+   - Ex: "6th sem" -> SEARCH: 6th semester
+
+2. **CLARIFY**: Query is too vague (e.g., "syllabus", "notes", "paper") with NO subject or semester.
+   - Output: CLARIFY: <short_question>
+   - Ex: "syllabus" -> CLARIFY: Which semester or subject syllabus do you need?
+
+3. **CHAT**: Greetings, situational, or identity questions.
+   - Output: CHAT: <friendly_response>
+   - Ex: "Hi" -> CHAT: Hey! I'm Aditya's AI assistant. Ask me about his projects or academic resources!
+
+Output ONLY the formatted string (SEARCH:..., CLARIFY:..., or CHAT:...).`
+                },
+                { role: 'user', content: message }
+            ],
+            model: 'llama-3.3-70b-versatile',
+            temperature: 0.3,
+            max_tokens: 50,
+        });
+
+        const output = completion.choices[0]?.message?.content?.trim() || "CHAT: I'm here to help!";
+
+        if (output.startsWith("SEARCH:")) return { type: 'SEARCH', query: output.replace("SEARCH:", "").trim() };
+        if (output.startsWith("CLARIFY:")) return { type: 'CLARIFY', question: output.replace("CLARIFY:", "").trim() };
+        if (output.startsWith("CHAT:")) return { type: 'CHAT', response: output.replace("CHAT:", "").trim() };
+
+        return { type: 'CHAT', response: output };
+    } catch (e) {
+        console.error("Intent Analysis Failed:", e);
+        return { type: 'SEARCH', query: message }; // Fallback to raw search
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Helper: Calculate File Relevance Score
 // ---------------------------------------------------------------------------
@@ -136,7 +188,26 @@ export async function generateChatResponse(message: string, sessionId: string) {
             console.warn("[ChatAgent] Failed to fetch history:", e);
         }
 
-        // 2. Fetch Comprehensive Resume Context
+        // --- 2. AI INTENT ANALYSIS ---
+        const intent = await analyzeUserIntent(contextMessage);
+
+        if (intent.type === 'CLARIFY') {
+            return intent.question;
+        }
+
+        if (intent.type === 'CHAT') {
+            // Check if it's a "hello" type message or something that really needs context?
+            // "CHAT" implies simple conversational response.
+            // However, we want to be safe. If the User asks "Who are you?", CHAT handles it.
+            return intent.response;
+        }
+
+        // --- SEARCH INTENT ---
+        // Use the REFINED query for searching
+        const lowerMsg = intent.query.toLowerCase().substring(0, 500);
+        console.log(`[ChatAgent] Refined Search Query: "${lowerMsg}" (Original: "${contextMessage}")`);
+
+        // 3. Fetch Comprehensive Resume Context
         const [about, projects, skills, experience, codingProfileData, certifications] = await Promise.all([
             prisma.about.findFirst({ include: { values: true, focusAreas: true, journey: { include: { paragraphs: true } } } }),
             prisma.project.findMany({ select: { title: true, description: true, repoUrl: true, technologies: true } }),
@@ -147,7 +218,6 @@ export async function generateChatResponse(message: string, sessionId: string) {
         ]);
 
         const codingProfile = codingProfileData as any;
-        const lowerMsg = contextMessage.toLowerCase().substring(0, 500);
 
         // 2. Intelligent Project Matching
         const matchedProjects = projects.filter(p =>
