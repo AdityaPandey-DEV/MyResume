@@ -235,7 +235,7 @@ export default function SyncManager() {
                             </div>
 
                             <a
-                                href="https://chromewebstore.google.com/detail/your-extension-id"
+                                href="https://chromewebstore.google.com/detail/myresume-linkedin-sync/lamhlcknaehhpeeinfjkikaogmbdpagg"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="inline-flex items-center gap-2 px-8 py-4 bg-[#0077b5] text-white font-bold rounded-xl hover:bg-[#006396] transition-all shadow-lg hover:shadow-xl active:scale-95"
