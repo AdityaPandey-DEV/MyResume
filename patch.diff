@@ -1,0 +1,86 @@
+diff --git a/app/api/career/jobs/upload/route.ts b/app/api/career/jobs/upload/route.ts
+index 3bb2754..6dbd909 100644
+--- a/app/api/career/jobs/upload/route.ts
++++ b/app/api/career/jobs/upload/route.ts
+@@ -4,9 +4,15 @@ import { prisma } from '@/lib/prisma'
+ import { writeFile, mkdir } from 'fs/promises'
+ import { join } from 'path'
+ import { existsSync } from 'fs'
++import { auth } from '@/lib/auth'
+ 
+ export async function POST(request: NextRequest) {
+     try {
++        const session = await auth()
++        if (!session?.user) {
++            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
++        }
++
+         const formData = await request.formData()
+         const file = formData.get('file') as File
+ 
+diff --git a/app/api/certifications/upload/route.ts b/app/api/certifications/upload/route.ts
+index 3fdf750..e9425ba 100644
+--- a/app/api/certifications/upload/route.ts
++++ b/app/api/certifications/upload/route.ts
+@@ -3,11 +3,17 @@ import { writeFile, mkdir } from 'fs/promises'
+ import { join } from 'path'
+ import { existsSync } from 'fs'
+ import { revalidatePath } from 'next/cache'
++import { auth } from '@/lib/auth'
+ 
+ import { put } from '@vercel/blob'
+ 
+ export async function POST(request: NextRequest) {
+     try {
++        const session = await auth()
++        if (!session?.user) {
++            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
++        }
++
+         const formData = await request.formData()
+         const file = formData.get('file') as File
+ 
+diff --git a/app/api/hero/upload/route.ts b/app/api/hero/upload/route.ts
+index 508e6be..0abbee2 100644
+--- a/app/api/hero/upload/route.ts
++++ b/app/api/hero/upload/route.ts
+@@ -3,11 +3,17 @@ import { writeFile, mkdir } from 'fs/promises'
+ import { join } from 'path'
+ import { existsSync } from 'fs'
+ import { revalidatePath } from 'next/cache'
++import { auth } from '@/lib/auth'
+ 
+ import { put } from '@vercel/blob'
+ 
+ export async function POST(request: NextRequest) {
+     try {
++        const session = await auth()
++        if (!session?.user) {
++            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
++        }
++
+         const formData = await request.formData()
+         const file = formData.get('file') as File
+ 
+diff --git a/app/api/projects/upload/route.ts b/app/api/projects/upload/route.ts
+index 4b23681..b8d8b1c 100644
+--- a/app/api/projects/upload/route.ts
++++ b/app/api/projects/upload/route.ts
+@@ -3,11 +3,17 @@ import { writeFile, mkdir } from 'fs/promises'
+ import { join } from 'path'
+ import { existsSync } from 'fs'
+ import { revalidatePath } from 'next/cache'
++import { auth } from '@/lib/auth'
+ 
+ import { put } from '@vercel/blob'
+ 
+ export async function POST(request: NextRequest) {
+   try {
++    const session = await auth()
++    if (!session?.user) {
++      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
++    }
++
+     const formData = await request.formData()
+     const file = formData.get('file') as File
+ 
